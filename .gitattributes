@@ -1,0 +1,6 @@
+# 改行はLFに統一（Windowsで取得しても変わらない）
+* text=auto eol=lf
+
+# 同梱ライブラリは一切変換しない（SHA-256での整合性検査が、改行変換で崩れないようにする）
+libs/** -text linguist-vendored
+*.png binary

@@ -1,0 +1,265 @@
+{
+  "extName": {
+    "message": "化学式ビューア"
+  },
+  "extDescription": {
+    "message": "選択した化学式・化合物名を解析し、3D構造と情報を表示します。"
+  },
+  "commandAnalyzeSelectionDescription": {
+    "message": "選択中のテキストを化学式として解析"
+  },
+  "contextMenuAnalyze": {
+    "message": "化学式として解析: 「%s」"
+  },
+  "appTitle": {
+    "message": "化学式ビューア"
+  },
+  "optionsLinkTitle": {
+    "message": "設定"
+  },
+  "searchPlaceholder": {
+    "message": "例: H2O, aspirin, グルコース"
+  },
+  "searchButton": {
+    "message": "解析"
+  },
+  "searchButtonBusy": {
+    "message": "検索中…"
+  },
+  "smilesToggleLabel": {
+    "message": "SMILES記法として検索する（例: CCO）"
+  },
+  "disclosureNote": {
+    "message": "入力内容は検索のためPubChem（米国国立生物工学情報センター）に送信されます。"
+  },
+  "privateNote": {
+    "message": "プライベートウィンドウでは検索履歴を保存しません。"
+  },
+  "labelQuery": {
+    "message": "入力"
+  },
+  "labelName": {
+    "message": "化合物名"
+  },
+  "labelFormula": {
+    "message": "分子式"
+  },
+  "labelWeight": {
+    "message": "分子量"
+  },
+  "labelSmiles": {
+    "message": "SMILES"
+  },
+  "labelInchikey": {
+    "message": "InChIKey"
+  },
+  "labelSynonyms": {
+    "message": "別名"
+  },
+  "labelHazard": {
+    "message": "危険有害性情報"
+  },
+  "copyResultButton": {
+    "message": "結果をコピー"
+  },
+  "copyResultDone": {
+    "message": "コピーしました"
+  },
+  "pubchemLinkText": {
+    "message": "PubChemで詳細を見る →"
+  },
+  "historyTitle": {
+    "message": "最近の検索"
+  },
+  "historyExportButton": {
+    "message": "エクスポート"
+  },
+  "historyClearButton": {
+    "message": "消去"
+  },
+  "historyEmpty": {
+    "message": "まだ検索履歴がありません"
+  },
+  "statusEmptyQuery": {
+    "message": "化学式・化合物名・SMILESを入力してください。"
+  },
+  "statusSearching": {
+    "message": "検索中…"
+  },
+  "statusNotFound": {
+    "message": "該当する化合物が見つかりませんでした。表記を変えて試してください。"
+  },
+  "statusTimeout": {
+    "message": "応答がタイムアウトしました。もう一度お試しください。"
+  },
+  "statusError": {
+    "message": "エラーが発生しました。ネットワーク接続を確認してください。"
+  },
+  "noStructureData": {
+    "message": "構造データを取得できませんでした"
+  },
+  "viewToggleTo2D": {
+    "message": "画像で表示"
+  },
+  "viewToggleTo3D": {
+    "message": "3Dモデルで表示"
+  },
+  "hazardSummary": {
+    "message": "危険有害性情報（詳細を表示）"
+  },
+  "clipboardLabelQuery": {
+    "message": "入力"
+  },
+  "clipboardLabelName": {
+    "message": "化合物名"
+  },
+  "clipboardLabelFormula": {
+    "message": "分子式"
+  },
+  "clipboardLabelWeight": {
+    "message": "分子量"
+  },
+  "clipboardLabelSmiles": {
+    "message": "SMILES"
+  },
+  "clipboardLabelInchikey": {
+    "message": "InChIKey"
+  },
+  "clipboardLabelPubchem": {
+    "message": "PubChem"
+  },
+  "weightWithUnit": {
+    "message": "$WEIGHT$ g/mol",
+    "placeholders": {
+      "weight": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsPageTitle": {
+    "message": "化学式ビューア - 設定"
+  },
+  "optionsHeading": {
+    "message": "化学式ビューア - 設定"
+  },
+  "timeoutLabel": {
+    "message": "検索タイムアウト（秒）"
+  },
+  "timeoutHint": {
+    "message": "PubChemからの応答をこの秒数待っても返ってこない場合、エラー表示に切り替えます。"
+  },
+  "historyMaxLabel": {
+    "message": "検索履歴の保存件数上限"
+  },
+  "historyMaxHint": {
+    "message": "これを超えた分は、古い履歴から自動的に削除されます。"
+  },
+  "structureLabel": {
+    "message": "構造データの優先順位"
+  },
+  "structureOption3D": {
+    "message": "3D構造を優先（無ければ2Dで表示）"
+  },
+  "structureOption2D": {
+    "message": "2D構造を優先（3Dより高速な場合があります）"
+  },
+  "structureHint": {
+    "message": "PubChem上に両方存在しない化合物もあるため、優先順位側が無い場合はもう片方にフォールバックします。"
+  },
+  "autoHighlightLabel": {
+    "message": "ページ内の化学式らしき文字列を自動検出してハイライトする"
+  },
+  "autoHighlightHint1": {
+    "message": "有効にすると、数字を含む分子式パターン（例: H2O, C6H12O6）にうっすら下線を引きます。ホバーしただけでは通信は発生せず、"
+  },
+  "autoHighlightHint2": {
+    "message": "クリックした場合のみ、その文字列をPubChem（米国国立生物工学情報センター）に送信して"
+  },
+  "autoHighlightHint3": {
+    "message": "簡易情報を表示します。誤検出を減らすため、数字を含まない表記（NaClなど）は対象外です。ページ全体を解析するため、重いページでは若干の負荷がかかる場合があります。"
+  },
+  "shortcutLabel": {
+    "message": "キーボードショートカット"
+  },
+  "shortcutHintPrefix": {
+    "message": "既定では"
+  },
+  "shortcutHintMiddle": {
+    "message": "（Macは"
+  },
+  "shortcutHintSuffix": {
+    "message": "）で、選択中のテキストを解析できます。"
+  },
+  "shortcutConflictHint": {
+    "message": "他の拡張機能と割り当てが重複していると、無反応になったり別の動作をしたりすることがあります。その場合は下記の管理画面から、現在の割り当てを確認・変更してください。"
+  },
+  "shortcutChromeInstruction": {
+    "message": "Chrome: アドレスバーに chrome://extensions/shortcuts と入力して開く"
+  },
+  "shortcutFirefoxInstruction": {
+    "message": "Firefox: about:addons →「拡張機能」→ 歯車アイコン →「ショートカットを管理」"
+  },
+  "saveButton": {
+    "message": "保存"
+  },
+  "savedMessage": {
+    "message": "保存しました。"
+  },
+  "highlightClickHint": {
+    "message": "クリックして詳細を表示"
+  },
+  "statusTooLong": {
+    "message": "入力が長すぎます（200文字まで）。意図せず長い文章を選択していないか確認してください。"
+  },
+  "statusBusy": {
+    "message": "PubChemのサーバーが混み合っています。しばらくしてからもう一度お試しください。"
+  },
+  "statusFormulaMatch": {
+    "message": "分子式での一致です。同じ分子式の化合物（異性体）が複数ある場合、そのうち1件を表示しています。"
+  },
+  "permissionDenied": {
+    "message": "全サイトへのアクセスが許可されなかったため、ページ内ハイライトはOFFのままにしました。その他の設定は保存しました。"
+  },
+  "highlightError": {
+    "message": "取得に失敗しました。時間をおいてもう一度クリックしてください"
+  },
+  "autoHighlightPermissionNote": {
+    "message": "この機能を有効にして保存すると、ブラウザから「全サイトへのアクセス」の許可を求められます。無効にすると、この許可も自動的に取り消されます。"
+  },
+  "highlightOpening": {
+    "message": "ポップアップを開いています…"
+  },
+  "highlightCheckToolbar": {
+    "message": "ツールバーのアイコンをクリックしてください"
+  },
+  "labelCas": {
+    "message": "CAS登録番号"
+  },
+  "labelOtherCandidates": {
+    "message": "ほかの候補"
+  },
+  "advancedPropsSummary": {
+    "message": "詳細情報（正確質量・XLogP・TPSA等）"
+  },
+  "labelExactMass": {
+    "message": "正確質量"
+  },
+  "labelXlogp": {
+    "message": "XLogP"
+  },
+  "labelTpsa": {
+    "message": "極性表面積(TPSA)"
+  },
+  "labelHDonor": {
+    "message": "水素結合供与数"
+  },
+  "labelHAcceptor": {
+    "message": "水素結合受容数"
+  },
+  "molarCalcLabel": {
+    "message": "モル計算:"
+  },
+  "clipboardLabelCas": {
+    "message": "CAS登録番号"
+  }
+}

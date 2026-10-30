@@ -1,0 +1,19 @@
+{
+  "name": "chem-viewer-tests",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "unit": "node unit.mjs",
+    "bg": "node bg.mjs",
+    "dom": "node dom.mjs",
+    "integrity": "node integrity.mjs",
+    "all": "node unit.mjs && node bg.mjs && node integrity.mjs && node dom.mjs",
+    "check": "node verify.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.1",
+    "playwright": "^1.63.0"
+  },
+  "description": "Chem Viewer のテスト（単体・background・ページ内ハイライトの統合・同梱ライブラリの整合性）"
+}

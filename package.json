@@ -1,0 +1,14 @@
+{
+  "name": "chem-viewer",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Look up chemical formulas, names (incl. Japanese) and SMILES on PubChem. Firefox / Chrome extension.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "npm --prefix tests ci && npm --prefix tests run all"
+  }
+}

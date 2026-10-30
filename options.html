@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title data-i18n="optionsPageTitle">化学式ビューア - 設定</title>
+<link rel="stylesheet" href="panel.css">
+<style>
+  body {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .field .field-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .field input[type="number"] {
+    width: 100px;
+    padding: 6px 8px;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .field select {
+    padding: 6px 8px;
+    border: 1px solid var(--input-border);
+    border-radius: 6px;
+    font-size: 13px;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .field-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .field-hint ul {
+    margin: 6px 0 0 18px;
+    padding: 0;
+  }
+  .field-hint code {
+    background: var(--border-soft);
+    padding: 1px 4px;
+    border-radius: 4px;
+  }
+  #save-status {
+    font-size: 12px;
+    color: #16a34a;
+    min-height: 16px;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1 data-i18n="optionsHeading">化学式ビューア - 設定</h1>
+  </header>
+  <main>
+    <div class="field">
+      <label for="timeout-input" data-i18n="timeoutLabel"></label>
+      <input type="number" id="timeout-input" min="1" max="60" step="1">
+      <div class="field-hint" data-i18n="timeoutHint"></div>
+    </div>
+
+    <div class="field">
+      <label for="history-max-input" data-i18n="historyMaxLabel"></label>
+      <input type="number" id="history-max-input" min="1" max="200" step="1">
+      <div class="field-hint" data-i18n="historyMaxHint"></div>
+    </div>
+
+    <div class="field">
+      <label for="structure-select" data-i18n="structureLabel"></label>
+      <select id="structure-select">
+        <option value="3d" data-i18n="structureOption3D"></option>
+        <option value="2d" data-i18n="structureOption2D"></option>
+      </select>
+      <div class="field-hint" data-i18n="structureHint"></div>
+    </div>
+
+    <div class="field">
+      <label class="field-checkbox">
+        <input type="checkbox" id="auto-highlight-input">
+        <span data-i18n="autoHighlightLabel"></span>
+      </label>
+      <div class="field-hint">
+        <span data-i18n="autoHighlightHint1"></span><strong data-i18n="autoHighlightHint2"></strong><span data-i18n="autoHighlightHint3"></span>
+        <br><span data-i18n="autoHighlightPermissionNote"></span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label data-i18n="shortcutLabel"></label>
+      <div class="field-hint">
+        <span data-i18n="shortcutHintPrefix"></span> <strong>Ctrl+Shift+8</strong>
+        <span data-i18n="shortcutHintMiddle"></span> <strong>Command+Shift+8</strong><span data-i18n="shortcutHintSuffix"></span><br>
+        <span data-i18n="shortcutConflictHint"></span>
+        <ul>
+          <li data-i18n="shortcutChromeInstruction"></li>
+          <li data-i18n="shortcutFirefoxInstruction"></li>
+        </ul>
+      </div>
+    </div>
+
+    <button id="save-btn" data-i18n="saveButton"></button>
+    <div id="save-status"></div>
+  </main>
+  <script src="libs/browser-polyfill.min.js"></script>
+  <script src="formula.js"></script>
+  <script src="pubchem.js"></script>
+  <script src="i18n.js"></script>
+  <script src="highlight-sync.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title data-i18n="appTitle">化学式ビューア</title>
+<link rel="stylesheet" href="panel.css">
+<style>
+  body {
+    width: 380px;
+    min-height: 200px;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1 data-i18n="appTitle">化学式ビューア</h1>
+    <span class="header-actions">
+      <button id="lang-toggle" class="lang-toggle-btn" type="button">EN</button>
+      <a id="options-link" href="#" role="button" data-i18n-title="optionsLinkTitle" data-i18n-aria-label="optionsLinkTitle">⚙</a>
+    </span>
+  </header>
+  <main>
+    <div class="search-row">
+      <input type="text" id="query-input" maxlength="200" autocomplete="off" spellcheck="false" data-i18n-placeholder="searchPlaceholder" data-i18n-aria-label="searchPlaceholder">
+      <button id="search-btn" data-i18n="searchButton"></button>
+    </div>
+    <label class="smiles-row">
+      <input type="checkbox" id="smiles-toggle">
+      <span data-i18n="smilesToggleLabel"></span>
+    </label>
+    <div class="disclosure-note" data-i18n="disclosureNote"></div>
+    <div id="private-note" class="disclosure-note" style="display:none;" data-i18n="privateNote"></div>
+    <div id="status" role="status" aria-live="polite"></div>
+    <div id="result">
+      <div class="result-row"><span data-i18n="labelQuery"></span><span id="r-query"></span></div>
+      <div class="result-row"><span data-i18n="labelName"></span><span id="r-name"></span></div>
+      <div class="result-row"><span data-i18n="labelFormula"></span><span id="r-formula"></span></div>
+      <div class="result-row"><span data-i18n="labelWeight"></span><span id="r-weight"></span></div>
+      <div class="result-row"><span data-i18n="labelSmiles"></span><span id="r-smiles"></span></div>
+      <div class="result-row"><span data-i18n="labelInchikey"></span><span id="r-inchikey"></span></div>
+      <div class="result-row" id="r-cas-row" style="display:none;">
+        <span data-i18n="labelCas"></span><span id="r-cas"></span>
+      </div>
+      <div class="result-row" id="r-synonyms-row" style="display:none;">
+        <span data-i18n="labelSynonyms"></span><span id="r-synonyms"></span>
+      </div>
+      <div class="result-row hazard-row" id="r-hazard-row" style="display:none;">
+        <span data-i18n="labelHazard"></span>
+        <details id="hazard-details">
+          <summary id="hazard-summary" data-i18n="hazardSummary"></summary>
+          <div id="hazard-statements"></div>
+        </details>
+      </div>
+      <div class="result-row" id="r-candidates-row" style="display:none;">
+        <span data-i18n="labelOtherCandidates"></span>
+        <select id="candidate-select"></select>
+      </div>
+      <details class="advanced-props">
+        <summary data-i18n="advancedPropsSummary"></summary>
+        <div class="result-row"><span data-i18n="labelExactMass"></span><span id="r-exactmass"></span></div>
+        <div class="result-row"><span data-i18n="labelXlogp"></span><span id="r-xlogp"></span></div>
+        <div class="result-row"><span data-i18n="labelTpsa"></span><span id="r-tpsa"></span></div>
+        <div class="result-row"><span data-i18n="labelHDonor"></span><span id="r-hdonor"></span></div>
+        <div class="result-row"><span data-i18n="labelHAcceptor"></span><span id="r-hacceptor"></span></div>
+      </details>
+      <div class="viewer-controls">
+        <button id="view-toggle" class="view-toggle-btn" style="display:none;"></button>
+      </div>
+      <div id="viewer"></div>
+      <img id="viewer-image" style="display:none;" alt="" referrerpolicy="no-referrer">
+      <div class="molar-calc">
+        <label data-i18n="molarCalcLabel"></label>
+        <input type="number" id="molar-mass-input" step="any" min="0">
+        <span>g =</span>
+        <span id="molar-mol-output">-</span>
+        <span>mol</span>
+      </div>
+      <div class="result-actions">
+        <button id="copy-result" data-i18n="copyResultButton"></button>
+        <a id="pubchem-link" href="#" target="_blank" data-i18n="pubchemLinkText"></a>
+      </div>
+    </div>
+    <div class="history-section">
+      <div class="history-header">
+        <span data-i18n="historyTitle"></span>
+        <span class="history-actions">
+          <button id="history-export" data-i18n="historyExportButton"></button>
+          <button id="history-clear" data-i18n="historyClearButton"></button>
+        </span>
+      </div>
+      <ul id="history-list"></ul>
+    </div>
+  </main>
+  <script src="libs/3Dmol-min.js"></script>
+  <script src="libs/browser-polyfill.min.js"></script>
+  <script src="formula.js"></script>
+  <script src="pubchem.js"></script>
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

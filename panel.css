@@ -1,0 +1,329 @@
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --border-soft: #f3f4f6;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-disabled: #93c5fd;
+  --viewer-bg: #f9fafb;
+  --input-border: #d1d5db;
+}
+
+/* ③ ダークモード対応（OS/ブラウザの設定に追従） */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1f2937;
+    --fg: #f3f4f6;
+    --muted: #9ca3af;
+    --border: #374151;
+    --border-soft: #2d3748;
+    --accent: #3b82f6;
+    --accent-hover: #60a5fa;
+    --accent-disabled: #3b5c8f;
+    --viewer-bg: #111827;
+    --input-border: #4b5563;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", "Hiragino Sans", "Yu Gothic", sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+header {
+  padding: 12px 16px;
+  background: var(--accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+header h1 {
+  font-size: 15px;
+  margin: 0;
+  font-weight: 600;
+}
+#options-link {
+  color: white;
+  text-decoration: none;
+  font-size: 15px;
+  opacity: 0.85;
+}
+#options-link:hover {
+  opacity: 1;
+}
+main {
+  padding: 14px 16px;
+}
+.search-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+input[type="text"] {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--fg);
+}
+button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+button:hover {
+  background: var(--accent-hover);
+}
+button:disabled {
+  background: var(--accent-disabled);
+  cursor: default;
+}
+.smiles-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.smiles-row input[type="checkbox"] {
+  margin: 0;
+}
+.disclosure-note {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+#status {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+  min-height: 16px;
+}
+#result {
+  display: none;
+}
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.result-row span:first-child {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.result-row span:last-child {
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lang-toggle-btn {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.lang-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.advanced-props {
+  margin-top: 6px;
+  font-size: 12px;
+}
+.advanced-props summary {
+  cursor: pointer;
+  color: var(--accent);
+  list-style: none;
+}
+.advanced-props summary::-webkit-details-marker {
+  display: none;
+}
+.advanced-props .result-row {
+  font-size: 12px;
+}
+#r-candidates-row select {
+  font-size: 12px;
+  padding: 2px 4px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+}
+.molar-calc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.molar-calc input[type="number"] {
+  width: 80px;
+  padding: 3px 6px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+}
+#molar-mol-output {
+  font-weight: 600;
+  color: var(--fg);
+}
+.hazard-row {
+  display: block;
+}
+.hazard-row > span:first-child {
+  color: var(--muted);
+  display: block;
+  margin-bottom: 2px;
+}
+#hazard-details {
+  font-size: 11px;
+  color: var(--muted);
+}
+#hazard-details summary {
+  cursor: pointer;
+  color: var(--accent);
+  list-style: none;
+}
+#hazard-details summary::-webkit-details-marker {
+  display: none;
+}
+#hazard-statements {
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.viewer-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+.view-toggle-btn {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-size: 11px;
+  padding: 3px 8px;
+}
+.view-toggle-btn:hover {
+  background: var(--accent);
+  color: white;
+}
+#viewer-image {
+  width: 100%;
+  max-width: 300px;
+  display: block;
+  margin: 4px auto 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+}
+#viewer {
+  width: 100%;
+  height: 220px;
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  position: relative;
+  background: var(--viewer-bg);
+}
+.result-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  gap: 8px;
+}
+#copy-result {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  font-size: 12px;
+  padding: 4px 10px;
+}
+#copy-result:hover {
+  background: var(--accent);
+  color: white;
+}
+#pubchem-link {
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+}
+#pubchem-link:hover {
+  text-decoration: underline;
+}
+.history-section {
+  margin-top: 16px;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 10px;
+}
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.history-header > span:first-child {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.history-actions {
+  display: flex;
+  gap: 4px;
+}
+.history-header button {
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 2px 6px;
+}
+.history-header button:hover {
+  background: var(--border-soft);
+  color: var(--fg);
+}
+#history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 140px;
+  overflow-y: auto;
+}
+.history-item {
+  font-size: 12px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--fg);
+}
+.history-item:hover {
+  background: var(--border-soft);
+}
+.history-empty {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 6px 8px;
+}

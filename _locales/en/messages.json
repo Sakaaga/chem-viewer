@@ -1,0 +1,265 @@
+{
+  "extName": {
+    "message": "Chemical Formula Viewer"
+  },
+  "extDescription": {
+    "message": "Look up a selected chemical formula or compound name and view its 3D structure and properties."
+  },
+  "commandAnalyzeSelectionDescription": {
+    "message": "Analyze the selected text as a chemical formula"
+  },
+  "contextMenuAnalyze": {
+    "message": "Analyze as chemical formula: \"%s\""
+  },
+  "appTitle": {
+    "message": "Chemical Formula Viewer"
+  },
+  "optionsLinkTitle": {
+    "message": "Settings"
+  },
+  "searchPlaceholder": {
+    "message": "e.g. H2O, aspirin, glucose"
+  },
+  "searchButton": {
+    "message": "Search"
+  },
+  "searchButtonBusy": {
+    "message": "Searching…"
+  },
+  "smilesToggleLabel": {
+    "message": "Search as SMILES notation (e.g. CCO)"
+  },
+  "disclosureNote": {
+    "message": "Your input is sent to PubChem (U.S. National Center for Biotechnology Information) to perform the search."
+  },
+  "privateNote": {
+    "message": "Search history is not saved in a private/incognito window."
+  },
+  "labelQuery": {
+    "message": "Query"
+  },
+  "labelName": {
+    "message": "Name"
+  },
+  "labelFormula": {
+    "message": "Formula"
+  },
+  "labelWeight": {
+    "message": "Molecular weight"
+  },
+  "labelSmiles": {
+    "message": "SMILES"
+  },
+  "labelInchikey": {
+    "message": "InChIKey"
+  },
+  "labelSynonyms": {
+    "message": "Synonyms"
+  },
+  "labelHazard": {
+    "message": "Hazard information"
+  },
+  "copyResultButton": {
+    "message": "Copy result"
+  },
+  "copyResultDone": {
+    "message": "Copied"
+  },
+  "pubchemLinkText": {
+    "message": "View details on PubChem →"
+  },
+  "historyTitle": {
+    "message": "Recent searches"
+  },
+  "historyExportButton": {
+    "message": "Export"
+  },
+  "historyClearButton": {
+    "message": "Clear"
+  },
+  "historyEmpty": {
+    "message": "No search history yet"
+  },
+  "statusEmptyQuery": {
+    "message": "Enter a formula, compound name, or SMILES string."
+  },
+  "statusSearching": {
+    "message": "Searching…"
+  },
+  "statusNotFound": {
+    "message": "No matching compound was found. Try a different spelling."
+  },
+  "statusTimeout": {
+    "message": "The request timed out. Please try again."
+  },
+  "statusError": {
+    "message": "An error occurred. Please check your network connection."
+  },
+  "noStructureData": {
+    "message": "Structure data could not be retrieved"
+  },
+  "viewToggleTo2D": {
+    "message": "Show as image"
+  },
+  "viewToggleTo3D": {
+    "message": "Show as 3D model"
+  },
+  "hazardSummary": {
+    "message": "Hazard information (show details)"
+  },
+  "clipboardLabelQuery": {
+    "message": "Query"
+  },
+  "clipboardLabelName": {
+    "message": "Name"
+  },
+  "clipboardLabelFormula": {
+    "message": "Formula"
+  },
+  "clipboardLabelWeight": {
+    "message": "Molecular weight"
+  },
+  "clipboardLabelSmiles": {
+    "message": "SMILES"
+  },
+  "clipboardLabelInchikey": {
+    "message": "InChIKey"
+  },
+  "clipboardLabelPubchem": {
+    "message": "PubChem"
+  },
+  "weightWithUnit": {
+    "message": "$WEIGHT$ g/mol",
+    "placeholders": {
+      "weight": {
+        "content": "$1"
+      }
+    }
+  },
+  "optionsPageTitle": {
+    "message": "Chemical Formula Viewer - Settings"
+  },
+  "optionsHeading": {
+    "message": "Chemical Formula Viewer - Settings"
+  },
+  "timeoutLabel": {
+    "message": "Search timeout (seconds)"
+  },
+  "timeoutHint": {
+    "message": "If PubChem does not respond within this time, an error is shown instead."
+  },
+  "historyMaxLabel": {
+    "message": "Maximum saved search history entries"
+  },
+  "historyMaxHint": {
+    "message": "Older entries beyond this number are removed automatically."
+  },
+  "structureLabel": {
+    "message": "Preferred structure data"
+  },
+  "structureOption3D": {
+    "message": "Prefer 3D structure (falls back to 2D)"
+  },
+  "structureOption2D": {
+    "message": "Prefer 2D structure (can be faster than 3D)"
+  },
+  "structureHint": {
+    "message": "Some compounds only have one type available on PubChem, in which case the other is used automatically."
+  },
+  "autoHighlightLabel": {
+    "message": "Automatically detect and highlight chemical formulas on web pages"
+  },
+  "autoHighlightHint1": {
+    "message": "When enabled, formula-like patterns containing digits (e.g. H2O, C6H12O6) get a subtle underline. Hovering alone sends no data; "
+  },
+  "autoHighlightHint2": {
+    "message": "only clicking sends that text to PubChem (U.S. National Center for Biotechnology Information) "
+  },
+  "autoHighlightHint3": {
+    "message": "to show quick info. Formulas without digits (e.g. NaCl) are excluded to reduce false positives. Scanning the whole page may add a small amount of load on heavy pages."
+  },
+  "shortcutLabel": {
+    "message": "Keyboard shortcut"
+  },
+  "shortcutHintPrefix": {
+    "message": "By default,"
+  },
+  "shortcutHintMiddle": {
+    "message": "(on Mac,"
+  },
+  "shortcutHintSuffix": {
+    "message": ") analyzes the currently selected text."
+  },
+  "shortcutConflictHint": {
+    "message": "If another extension already uses the same shortcut, it may not respond or may trigger a different action. Check and change the current assignment from the management screens below."
+  },
+  "shortcutChromeInstruction": {
+    "message": "Chrome: open chrome://extensions/shortcuts in the address bar"
+  },
+  "shortcutFirefoxInstruction": {
+    "message": "Firefox: about:addons → \"Extensions\" → gear icon → \"Manage Extension Shortcuts\""
+  },
+  "saveButton": {
+    "message": "Save"
+  },
+  "savedMessage": {
+    "message": "Saved."
+  },
+  "highlightClickHint": {
+    "message": "Click to show details"
+  },
+  "statusTooLong": {
+    "message": "The input is too long (max 200 characters). Check that you did not select a long passage by accident."
+  },
+  "statusBusy": {
+    "message": "PubChem is busy right now. Please try again in a little while."
+  },
+  "statusFormulaMatch": {
+    "message": "Matched by molecular formula. If several compounds (isomers) share this formula, one of them is shown."
+  },
+  "permissionDenied": {
+    "message": "Access to all sites was not granted, so page highlighting stays off. Your other settings were saved."
+  },
+  "highlightError": {
+    "message": "Lookup failed. Please click again in a moment"
+  },
+  "autoHighlightPermissionNote": {
+    "message": "When you enable this and save, the browser will ask you to allow access to all sites. Disabling it also revokes that permission automatically."
+  },
+  "highlightOpening": {
+    "message": "Opening the popup…"
+  },
+  "highlightCheckToolbar": {
+    "message": "Click the toolbar icon to see the result"
+  },
+  "labelCas": {
+    "message": "CAS Number"
+  },
+  "labelOtherCandidates": {
+    "message": "Other candidates"
+  },
+  "advancedPropsSummary": {
+    "message": "Advanced properties (exact mass, XLogP, TPSA, etc.)"
+  },
+  "labelExactMass": {
+    "message": "Exact mass"
+  },
+  "labelXlogp": {
+    "message": "XLogP"
+  },
+  "labelTpsa": {
+    "message": "Polar surface area (TPSA)"
+  },
+  "labelHDonor": {
+    "message": "H-bond donors"
+  },
+  "labelHAcceptor": {
+    "message": "H-bond acceptors"
+  },
+  "molarCalcLabel": {
+    "message": "Molar calc:"
+  },
+  "clipboardLabelCas": {
+    "message": "CAS Number"
+  }
+}

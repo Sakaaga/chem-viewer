@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_extName__",
+  "version": "0.3.0",
+  "default_locale": "ja",
+  "description": "__MSG_extDescription__",
+  "permissions": ["contextMenus", "storage", "activeTab", "scripting"],
+  "host_permissions": ["https://pubchem.ncbi.nlm.nih.gov/*", "https://www.wikidata.org/*"],
+  "optional_host_permissions": ["<all_urls>"],
+  "background": {
+    "scripts": ["libs/browser-polyfill.min.js", "formula.js", "pubchem.js", "highlight-sync.js", "background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{76ac8e19-a318-485f-aa10-fced234a3292}",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": ["searchTerms", "websiteContent"]
+      }
+    }
+  },
+  "sidebar_action": {
+    "default_panel": "sidepanel.html",
+    "default_title": "__MSG_appTitle__",
+    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+  },
+  "action": {
+    "default_title": "__MSG_appTitle__",
+    "default_popup": "popup.html",
+    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+  },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "commands": {
+    "analyze-selection": {
+      "suggested_key": { "default": "Ctrl+Shift+8", "mac": "Command+Shift+8" },
+      "description": "__MSG_commandAnalyzeSelectionDescription__"
+    }
+  },
+  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+}
