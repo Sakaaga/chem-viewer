@@ -6,6 +6,8 @@
 
 選択した化学式・化合物名・SMILES記法を [PubChem](https://pubchem.ncbi.nlm.nih.gov/) で検索し、分子式・分子量・SMILES・InChIKey・別名・危険有害性情報（GHS）・3D構造／2D構造画像を表示するブラウザ拡張機能です。
 
+#### この拡張機能・リポジトリは実験段階です。一般環境でのご利用はお勧めしません。/This extension and repository is in the experimental stage. It is not recommended to use it in a general environment.
+
 ## ビルドと読み込み
 
 ブラウザごとに必須のマニフェスト設定が異なるため（Chrome: `sidePanel`権限 / Firefox: `data_collection_permissions` 等）、
