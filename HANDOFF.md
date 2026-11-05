@@ -43,10 +43,9 @@ npm run check                     # 実Chromiumでの確認（要 playwright ins
   - テスト: `tests/unit.mjs` に「[SMILES系プロパティ名の改名への対応]」2件を追加（修正前は失敗することを確認済み）
   - 残り: 実PubChemで、SMILES欄に値が入ることを確認する（3-3 参照）
 
-### 3-2. 導入待ち（権限待ち）
-- **CI・CodeQL・Dependabot・Dependency review・リリース自動化は未導入**。設定は検証済みで `docs/pending-ci/` に退避してある（有効化の手順は `docs/pending-ci/README.md`）
-  - 必要なもの: ユーザーのGitHubトークンに **Workflows: Read and write** 権限（Fine-grainedトークンは設定画面で後から編集でき、文字列は変わらない）
-  - 有効化後、初回のCI・CodeQLの結果を確認して対処する。`README.md` の CI/CodeQL バッジと「開発とCI」の節は、この有効化までは実態と合っていない
+### 3-2. CI・スキャナ（2026-11-06に有効化）
+
+- `.github/` に CI・CodeQL・Dependabot・Dependency review・リリース自動化を配置した（旧 `docs/pending-ci/` は削除）。GitHub上での初回実行結果は、Actionsタブで確認し、失敗や検出があれば対処すること（Node 24でjsdomが動くか等は初回CIで判明する）
 - 適用済みのリポジトリ設定: シークレットスキャン＋プッシュ保護、Dependabotアラートと自動更新、脆弱性の非公開報告、Actions既定権限=読み取りのみ、mainの強制push/削除の禁止、wiki/projects無効、マージ後ブランチ自動削除
 
 ### 3-3. 未検証（実機・実サーバーで一度も確認していない）
@@ -80,7 +79,7 @@ options.html/js, i18n.js, _locales/{ja,en}      … 設定画面・多言語
 libs/            … 3Dmol.js, webextension-polyfill（無改変。SHA-256は THIRD_PARTY_NOTICES.md、tests/integrity.mjs が検証）
 tests/           … unit / bg / dom（jsdom）/ integrity / verify（実Chromium）
 scripts/check-amo-lint.mjs … addons-linterの結果判定（許可する警告は3Dmol.js内のevalのみ）
-docs/pending-ci/ … 導入待ちのCI設定
+
 ```
 - 通信は **background / ポップアップ側のみ**。content script からは直接fetchしない（ページのCORS/CSPで失敗するため、`runtime.sendMessage` でbackgroundへ依頼）
 - 選択テキストの受け渡しは `storage.session`（メモリ上、1分で失効）。履歴・設定は `storage.local`。プライベートウィンドウでは履歴を保存しない
