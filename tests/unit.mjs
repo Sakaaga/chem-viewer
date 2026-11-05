@@ -313,6 +313,32 @@ await test("light モードは構造データ・別名・GHS・CASを取得し�
   assert.equal(r.ghs, null);
 });
 
+console.log("\n[SMILES系プロパティ名の改名への対応]");
+await test("応答キーが SMILES / ConnectivitySMILES / 旧名 のどれでも props.smiles に正規化される", async () => {
+  const cases = [
+    [{ CanonicalSMILES: undefined, ConnectivitySMILES: "CC(=O)O" }, "CC(=O)O"], // 旧名で要求→新名で返る
+    [{ CanonicalSMILES: undefined, SMILES: "C[C@H](N)C(=O)O" }, "C[C@H](N)C(=O)O"],
+    [{ CanonicalSMILES: "CCO" }, "CCO"], // 旧名のまま返る場合
+    [{ CanonicalSMILES: undefined, IsomericSMILES: "CCN" }, "CCN"],
+  ];
+  for (const [over, expected] of cases) {
+    const fetchImpl = async (url) => {
+      if (url.includes("/name/")) return json(200, { IdentifierList: { CID: [1] } });
+      return json(200, PROPS(over));
+    };
+    const { ChemAPI } = makeEnv({ fetchImpl });
+    const r = await ChemAPI.resolveCompound("x", { light: true });
+    assert.equal(r.props.smiles, expected, JSON.stringify(over));
+  }
+});
+await test("SMILES系のキーが無い・空文字・文字列以外なら null（誤った値を表示しない）", async () => {
+  for (const over of [{ CanonicalSMILES: undefined }, { CanonicalSMILES: "" }, { CanonicalSMILES: 123 }]) {
+    const fetchImpl = async (url) => (url.includes("/name/") ? json(200, { IdentifierList: { CID: [1] } }) : json(200, PROPS(over)));
+    const { ChemAPI } = makeEnv({ fetchImpl });
+    assert.equal((await ChemAPI.resolveCompound("x", { light: true })).props.smiles, null);
+  }
+});
+
 console.log("\n[履歴・設定]");
 await test("履歴の重複判定は『クエリ＋検索モード』／上限件数を守る", async () => {
   const { ChemAPI } = makeEnv({ fetchImpl: async () => json(404, {}), settings: { historyMax: 2 } });

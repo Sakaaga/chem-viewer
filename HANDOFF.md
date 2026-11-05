@@ -3,7 +3,7 @@
 このプロジェクトの作業を、別のChat・別の担当者が引き継ぐための資料です。**作業のたびに更新してください。**
 （作業用のサンドボックスは途中で何度もリセットされ、手元のファイルが消えます。正本は常にこのGitHubリポジトリです。）
 
-最終更新: 2026-11-04
+最終更新: 2026-11-06
 
 ## 0. 引き継いだら最初にやること
 1. リポジトリを取得（公開リポジトリなのでトークン不要）: `git clone https://github.com/Sakaaga/chem-viewer.git`
@@ -23,7 +23,7 @@
 ## 2. 開発の進め方
 ```
 node build.mjs                    # dist/firefox, dist/chrome とzip（構文・ロケール・参照ファイル等の自動検査つき）
-cd tests && npm ci && npm run all # テスト56件（unit 33 + bg 7 + dom 16）＋ 同梱ライブラリ2件のSHA-256検査
+cd tests && npm ci && npm run all # テスト58件（unit 35 + bg 7 + dom 16）＋ 同梱ライブラリ2件のSHA-256検査
 npm run check                     # 実Chromiumでの確認（要 playwright install。PubChemへ実通信。CIでは実行しない）
 ```
 - Node.js 22 以上。依存パッケージは tests/ 内のみ（配布物は依存ゼロ）
@@ -33,15 +33,15 @@ npm run check                     # 実Chromiumでの確認（要 playwright ins
 - 作業環境の注意: シェルは `sh` で、bash配列が使えないことがある（`bash -c '...'` を使う）。外部通信はgithub.com・npm・pypi等に限られ、**PubChem・Wikidataへは届かない**（そのため実APIでの確認は一度もできていない）
 
 ## 3. 未解決・未着手（優先度順）
-> ユーザーの指示により、**未解決の問題は意図的に修正せずに残してあります**。直す前に、必ずユーザーに確認してください。
+> 3-1は2026-11-06にユーザーの指示で修正した。以降の項目も、着手前にユーザーに確認すること。
 
-### 3-1. 既知の不具合（未修正）
-- **SMILES欄が「-」になっている可能性が高い**
-  - 原因: PubChemがSMILES系のプロパティ名を改名した（`CanonicalSMILES` を要求すると応答のキーは `ConnectivitySMILES`、`IsomericSMILES` は `SMILES`）。当方のコードは `props.CanonicalSMILES` を読んでいる
-  - 該当: `pubchem.js` の `fetchProperties`（要求するプロパティ一覧）、`app.js` の2箇所（`els.rSmiles.textContent` と `lastResult.smiles`）。テストの偽応答（`tests/unit.mjs` の `PROPS`、`tests/harness.mjs`）も旧キーのため、この不具合を検出できていない
-  - 修正案: `fetchProperties` で `p.smiles = p.SMILES ?? p.ConnectivitySMILES ?? p.CanonicalSMILES ?? p.IsomericSMILES ?? null` を作り、`app.js` はそれを表示する。テストに新キーの応答を追加する
-  - 根拠の強さ: 公開情報（他プロジェクトの不具合報告）に基づく。実サーバーの応答では未確認
-  - 経緯: 以前「あわせて修正する」とユーザーに伝えたが、反映漏れだった（ユーザーに報告済み）
+### 3-1. 既知の不具合
+
+- **SMILES欄が「-」になる不具合: 修正済み（2026-11-06）。実サーバーでの確認のみ未了**
+  - 原因: PubChemがSMILES系のプロパティ名を改名した（`CanonicalSMILES` を要求すると応答キーは `ConnectivitySMILES`、`IsomericSMILES` は `SMILES`）
+  - 対応: `pubchem.js` の `fetchProperties` が `SMILES` → `ConnectivitySMILES` → `CanonicalSMILES` → `IsomericSMILES` の順で最初の非空文字列を `props.smiles` に正規化（無ければ `null`）。`app.js` は `props.smiles` を表示。要求するプロパティ名は従来どおり `CanonicalSMILES`（旧名のエイリアスが効く前提。実応答は未確認なので、実機で確認すること）
+  - テスト: `tests/unit.mjs` に「[SMILES系プロパティ名の改名への対応]」2件を追加（修正前は失敗することを確認済み）
+  - 残り: 実PubChemで、SMILES欄に値が入ることを確認する（3-3 参照）
 
 ### 3-2. 導入待ち（権限待ち）
 - **CI・CodeQL・Dependabot・Dependency review・リリース自動化は未導入**。設定は検証済みで `docs/pending-ci/` に退避してある（有効化の手順は `docs/pending-ci/README.md`）

@@ -195,7 +195,15 @@ async function fetchProperties(cid) {
     "MolecularFormula,MolecularWeight,IUPACName,CanonicalSMILES,InChIKey," +
     "ExactMass,XLogP,TPSA,HBondDonorCount,HBondAcceptorCount";
   const data = await request(`${PUBCHEM_BASE}/compound/cid/${cid}/property/${props}/JSON`);
-  return data?.PropertyTable?.Properties?.[0] ?? null;
+  const p = data?.PropertyTable?.Properties?.[0];
+  if (!p) return null;
+  // PubChemはSMILES系のプロパティ名を改名したため、要求名と応答キーが一致しないことがある
+  // （CanonicalSMILES→ConnectivitySMILES、IsomericSMILES→SMILES）。どの名前で返っても読めるよう、
+  // 表示側が使う p.smiles に正規化する。文字列以外・空文字は採用しない。
+  const smiles = [p.SMILES, p.ConnectivitySMILES, p.CanonicalSMILES, p.IsomericSMILES].find(
+    (v) => typeof v === "string" && v.length > 0
+  );
+  return { ...p, smiles: smiles ?? null };
 }
 
 // CAS登録番号。PubChemは専用プロパティとしては提供していないため、別名（Synonyms）の中から

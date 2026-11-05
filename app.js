@@ -259,7 +259,7 @@ async function renderResult(resolved, query, smilesMode, { skipHistory = false }
   els.rName.textContent = currentLang === "ja" && currentJaName ? currentJaName : nameEn;
   els.rFormula.textContent = props.MolecularFormula || "-";
   els.rWeight.textContent = props.MolecularWeight ? t("weightWithUnit", [props.MolecularWeight]) : "-";
-  els.rSmiles.textContent = props.CanonicalSMILES || "-";
+  els.rSmiles.textContent = props.smiles || "-";
   els.rInchikey.textContent = props.InChIKey || "-";
   els.pubchemLink.href = `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`;
 
@@ -300,7 +300,7 @@ async function renderResult(resolved, query, smilesMode, { skipHistory = false }
     nameEn,
     formula: props.MolecularFormula || "-",
     weight: props.MolecularWeight ? t("weightWithUnit", [props.MolecularWeight]) : "-",
-    smiles: props.CanonicalSMILES || "-",
+    smiles: props.smiles || "-",
     inchikey: props.InChIKey || "-",
     casNumber: casNumber || "-",
     pubchemUrl: `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`,
