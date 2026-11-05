@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # GitHub Actions（コミットハッシュ固定のまま、新しい版のハッシュへ更新するPRを作る）
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
+
+  # テスト用の依存関係（jsdom, playwright）。配布物には含まれない
+  - package-ecosystem: npm
+    directory: "/tests"
+    schedule:
+      interval: weekly
+    groups:
+      test-tooling:
+        patterns: ["*"]
+    open-pull-requests-limit: 5

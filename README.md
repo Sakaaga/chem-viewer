@@ -156,3 +156,7 @@ node build.mjs      # dist/firefox, dist/chrome とzipを生成（検査つき�
 ## ライセンス
 
 本体は [MIT](LICENSE)。同梱ライブラリは別ライセンスです（[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)）。
+
+## 引き継ぎ
+
+未解決の問題・未検証事項・設計メモ・引き継ぎ手順は [HANDOFF.md](HANDOFF.md) を参照してください。

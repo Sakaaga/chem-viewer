@@ -1,0 +1,12 @@
+name: Chem Viewer CodeQL config
+
+# 標準より広いセキュリティ系クエリを使う
+queries:
+  - uses: security-extended
+
+# 圧縮済みの同梱ライブラリ（無改変の公式配布物。整合性は tests/integrity.mjs がSHA-256で検査）と、
+# 生成物・依存パッケージは解析対象から外す（ノイズと実行時間の削減）
+paths-ignore:
+  - libs
+  - dist
+  - "**/node_modules"

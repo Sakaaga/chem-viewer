@@ -1,0 +1,49 @@
+name: Release
+
+# v0.3.0 のようなタグをpushすると、Firefox用・Chrome用のzipとソースzipをReleaseに添付する
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+      - name: Verify that the tag matches the manifest versions
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          for m in manifest.firefox.json manifest.chrome.json; do
+            V=$(node -p "require('./$m').version")
+            if [ "$V" != "$TAG_VERSION" ]; then
+              echo "::error::$m version ($V) does not match the tag ($TAG_VERSION)"
+              exit 1
+            fi
+          done
+      - name: Install test dependencies
+        working-directory: tests
+        run: npm ci
+      - name: Run tests (release gate)
+        working-directory: tests
+        run: npm run all
+      - name: Build
+        run: node build.mjs
+      - name: Create source archive (for AMO source submission)
+        run: git archive --format=zip --prefix="chem-viewer-${GITHUB_REF_NAME}/" -o "dist/chem-viewer-source-${GITHUB_REF_NAME}.zip" HEAD
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
