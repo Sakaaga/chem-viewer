@@ -55,11 +55,11 @@ npm run check                     # 実Chromiumでの確認（要 playwright ins
 - 分子式検索（`fastformula`）が、水和物を展開した式（例 `CuH10O9S`）や `D2O` を受け付けるか。ローカルでは受理しているが、PubChem側で見つからない可能性がある
 - addons-linter は実行済み（エラー0、警告1=3Dmol.js内のevalで既知・対処済み）。ただし実際のAMO審査・Chrome審査は未提出
 
-### 3-4. 提出まわり（未着手）
-- ストア掲載文に「入力・選択した文字列をPubChem（と、日本語名検索・日本語表示ではWikidata）に送信する」「GHSは参考表示でSDSの代替ではない」旨を書く
-- `PRIVACY.md` を公開URLに置く（GitHub Pages等。未設定）。Chrome Developer Dashboardのプライバシー欄で、送信データ（検索語・ウェブサイトのコンテンツ）を申告
-- Firefoxの `browser_specific_settings.gecko.id` は確定済み（`{76ac8e19-a318-485f-aa10-fced234a3292}`）。**公開後は変更不可**。変えない
-- 提出用ソースzipは、タグ `vX.Y.Z` をpushすると `release.yml`（導入後）が作る。手動なら `git archive`
+### 3-4. 提出まわり（一部着手: 2026-11-06）
+
+- 掲載文（日英）・Chrome「プライバシー」欄・権限の理由の下書きを `docs/store-listing.md` に追加した（ユーザーによる確認・手直しはこれから）
+- プライバシーポリシーの公開: GitHub Pagesを有効化した（main / ルート、`_config.yml` と `privacy-policy.md` が `PRIVACY.md` を取り込む）。公開URLは `https://sakaaga.github.io/chem-viewer/privacy/`。Pagesのビルドは成功と表示されたが、**このURLが実際に開けて内容が正しいかは未確認**（この環境から github.io に接続できないため）。ストアに登録する前に、ブラウザで開いて確認すること
+- 未了: Chrome Developer Dashboardのプライバシー欄の申告、AMO・Chromeへの実提出、スクリーンショット類の用意
 
 ### 3-5. 既知の制限・検討中の案
 - 既知の制限は `README.md` の「既知の制限」を参照（PDFビューア内は非対応、`B52`/`F16`/`N95` のような「単一元素＋数字」は誤検出が残る、iframe内は対象外 など）
