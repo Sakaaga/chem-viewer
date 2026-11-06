@@ -46,7 +46,7 @@ npm run check                     # 実Chromiumでの確認（要 playwright ins
 ### 3-2. CI・スキャナ（2026-11-06に有効化）
 
 - `.github/` に CI・CodeQL・Dependabot・Dependency review・リリース自動化を配置した（旧 `docs/pending-ci/` は削除）。GitHub上での初回実行結果は、Actionsタブで確認し、失敗や検出があれば対処すること（Node 24でjsdomが動くか等は初回CIで判明する）
-- 適用済みのリポジトリ設定: シークレットスキャン＋プッシュ保護、Dependabotアラートと自動更新、脆弱性の非公開報告、Actions既定権限=読み取りのみ、mainの強制push/削除の禁止、wiki/projects無効、マージ後ブランチ自動削除
+- リポジトリ設定（2026-11-06にAPIで確認。この日に私が変更したものではない）: シークレットスキャン＋プッシュ保護=有効、Dependabotアラート・セキュリティ更新=有効、脆弱性の非公開報告=有効、Actions既定権限=読み取りのみ、mainの強制push・削除=禁止、wiki/projects=無効、マージ後ブランチ自動削除=有効
 
 ### 3-3. 未検証（実機・実サーバーで一度も確認していない）
 - 実際のFirefox/Chromeでの動作全般（これまでの検証はjsdomと偽fetchのみ）。特に: ハイライトをクリックしたときのポップアップ自動表示（`action.openPopup()`）、全サイト権限の許可フロー、Chromeのサイドパネル、Wikipedia等の実ページでのハイライト

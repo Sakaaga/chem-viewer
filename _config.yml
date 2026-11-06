@@ -1,0 +1,21 @@
+# GitHub Pages（プライバシーポリシー公開用）。公開するのは privacy-policy.md のみ。
+title: Chem Viewer
+exclude:
+  - tests
+  - libs
+  - icons
+  - _locales
+  - scripts
+  - dist
+  - docs
+  - "*.js"
+  - "*.mjs"
+  - "*.json"
+  - "*.html"
+  - "*.css"
+  - README.md
+  - HANDOFF.md
+  - SECURITY.md
+  - REVIEWER_NOTES.md
+  - THIRD_PARTY_NOTICES.md
+  - LICENSE
