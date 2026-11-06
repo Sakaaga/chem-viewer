@@ -153,6 +153,12 @@ async function fetchCidBySmiles(smiles) {
   return firstCid(await request(`${PUBCHEM_BASE}/compound/smiles/${encodeURIComponent(smiles)}/cids/JSON`));
 }
 
+// Wikidataの項目ID（Q123）として妥当かを検証する。応答から受け取ったIDをURLへ埋め込むため、
+// 想定外の文字列（"Q1&origin=..." など）でクエリを書き換えられないようにする。
+function isWikidataId(id) {
+  return typeof id === "string" && /^Q[1-9]\d{0,12}$/.test(id);
+}
+
 // Wikidataで日本語名から化合物を探す（PubChemの名前検索は和名にほぼ対応していないため）。
 // 1) wbsearchentities で日本語ラベル/別名から候補の項目(QID)を探す
 // 2) 各候補の claims から P662（PubChem CID）を取り出す
@@ -161,7 +167,7 @@ async function fetchCidBySmiles(smiles) {
 async function fetchCidByJapaneseNameWithLabel(name) {
   const searchUrl = `${WIKIDATA_BASE}?action=wbsearchentities&search=${encodeURIComponent(name)}&language=ja&format=json&origin=*&type=item&limit=5`;
   const searchData = await request(searchUrl);
-  const candidates = (searchData?.search || []).filter((s) => s.id);
+  const candidates = (searchData?.search || []).filter((s) => isWikidataId(s?.id));
   if (candidates.length === 0) return null;
 
   const idsParam = candidates.map((c) => c.id).join("|");
@@ -183,7 +189,7 @@ async function fetchJapaneseLabelByCid(cid) {
   const searchUrl = `${WIKIDATA_BASE}?action=query&list=search&srsearch=${encodeURIComponent(`haswbstatement:P662=${cid}`)}&format=json&origin=*&srlimit=1`;
   const searchData = await request(searchUrl);
   const qid = searchData?.query?.search?.[0]?.title;
-  if (!qid) return null;
+  if (!isWikidataId(qid)) return null;
 
   const entityUrl = `${WIKIDATA_BASE}?action=wbgetentities&ids=${qid}&props=labels&languages=ja&format=json&origin=*`;
   const entityData = await request(entityUrl);

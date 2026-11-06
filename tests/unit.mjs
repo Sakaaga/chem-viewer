@@ -247,6 +247,40 @@ await test("fetchJapaneseLabelByCid: haswbstatementでCIDから逆引きする",
   assert.ok(urls[0].includes("haswbstatement%3AP662%3D2244") || urls[0].includes("haswbstatement:P662=2244"));
 });
 
+console.log("\n[Wikidata応答のID検証（URL注入の防止）]");
+await test("検索応答に不正な項目IDが混ざっていても、そのIDを使った問い合わせをしない", async () => {
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(url);
+    if (url.includes("/name/")) return json(404, {});
+    if (url.includes("action=wbsearchentities")) {
+      return json(200, { search: [{ id: "Q1&origin=evil", label: "x" }, { id: "../Q2", label: "y" }, { id: "Q18216", label: "\u30a2\u30b9\u30d4\u30ea\u30f3" }] });
+    }
+    if (url.includes("action=wbgetentities")) {
+      return json(200, { entities: { Q18216: { claims: { P662: [{ mainsnak: { datavalue: { value: "2244" } } }] } } } });
+    }
+    if (url.includes("/property/")) return json(200, PROPS({ CID: 2244 }));
+    return text(200, "sdf");
+  };
+  const { ChemAPI } = makeEnv({ fetchImpl });
+  const r = await ChemAPI.resolveCompound("\u30a2\u30b9\u30d4\u30ea\u30f3", { light: true });
+  assert.equal(r.cid, 2244);
+  const entityUrl = urls.find((u) => u.includes("action=wbgetentities"));
+  assert.ok(entityUrl.includes("ids=Q18216&"), entityUrl);
+  assert.ok(!urls.some((u) => u.includes("evil") || u.includes("..")), urls.join("\n"));
+});
+await test("fetchJapaneseLabelByCid: 項目IDの形式でないタイトルは使わず null を返す", async () => {
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(url);
+    if (url.includes("action=query")) return json(200, { query: { search: [{ title: "Q1&props=labels|claims" }] } });
+    return json(200, {});
+  };
+  const { ChemAPI } = makeEnv({ fetchImpl });
+  assert.equal(await ChemAPI.fetchJapaneseLabelByCid(2244), null);
+  assert.ok(!urls.some((u) => u.includes("action=wbgetentities")), "不正なIDで項目取得を行いました");
+});
+
 console.log("\n[CAS番号・GHS和訳]");
 await test("別名(Synonyms)の中からCAS番号の形式のものだけを抽出する", async () => {
   const fetchImpl = async (url) => {

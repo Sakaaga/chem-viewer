@@ -23,7 +23,7 @@
 ## 2. 開発の進め方
 ```
 node build.mjs                    # dist/firefox, dist/chrome とzip（構文・ロケール・参照ファイル等の自動検査つき）
-cd tests && npm ci && npm run all # テスト58件（unit 35 + bg 7 + dom 16）＋ 同梱ライブラリ2件のSHA-256検査
+cd tests && npm ci && npm run all # テスト60件（unit 37 + bg 7 + dom 16）＋ 同梱ライブラリ2件のSHA-256検査
 npm run check                     # 実Chromiumでの確認（要 playwright install。PubChemへ実通信。CIでは実行しない）
 ```
 - Node.js 22 以上。依存パッケージは tests/ 内のみ（配布物は依存ゼロ）
@@ -47,6 +47,8 @@ npm run check                     # 実Chromiumでの確認（要 playwright ins
 
 - `.github/` に CI・CodeQL・Dependabot・Dependency review・リリース自動化を配置した（旧 `docs/pending-ci/` は削除）。GitHub上での初回実行結果は、Actionsタブで確認し、失敗や検出があれば対処すること（Node 24でjsdomが動くか等は初回CIで判明する）
 - リポジトリ設定（2026-11-06にAPIで確認。この日に私が変更したものではない）: シークレットスキャン＋プッシュ保護=有効、Dependabotアラート・セキュリティ更新=有効、脆弱性の非公開報告=有効、Actions既定権限=読み取りのみ、mainの強制push・削除=禁止、wiki/projects=無効、マージ後ブランチ自動削除=有効
+
+- セキュリティ確認（2026-11-06）: 構文・シークレット混入・危険な書き込み処理・Actions権限・`npm audit` を確認し、問題なし。Wikidata応答の項目ID（`Q123` 形式）を検証してからURLに使うよう修正し（`isWikidataId`）、`pubchem-link` に `rel="noopener noreferrer"` を付けた。GitHubのCodeQL・Dependabot・シークレットスキャンのアラート件数は、使用したトークンに権限がなく未確認なので、Securityタブで確認すること
 
 ### 3-3. 未検証（実機・実サーバーで一度も確認していない）
 - 実際のFirefox/Chromeでの動作全般（これまでの検証はjsdomと偽fetchのみ）。特に: ハイライトをクリックしたときのポップアップ自動表示（`action.openPopup()`）、全サイト権限の許可フロー、Chromeのサイドパネル、Wikipedia等の実ページでのハイライト
