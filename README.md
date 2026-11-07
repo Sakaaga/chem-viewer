@@ -8,6 +8,8 @@
 
 #### この拡張機能・リポジトリは実験段階です。一般環境でのご利用はお勧めしません。/This extension and repository is in the experimental stage. It is not recommended to use it in a general environment.
 
+**公開状況**: Firefox版は Mozilla Add-ons（AMO）で公開済み（v0.3.0。審査承認は2026-11-07）。Chrome Web Store版は未提出です。
+
 ## ビルドと読み込み
 
 ブラウザごとに必須のマニフェスト設定が異なるため（Chrome: `sidePanel`権限 / Firefox: `data_collection_permissions` 等）、
@@ -92,11 +94,11 @@ F12 →「コンソール」で `Chem Viewer:` から始まるメッセージを
 
 ## ストア提出に向けて（作業メモ）
 
-コードだけでは満たせない、提出時の作業です。
+コードだけでは満たせない、提出時の作業です。Firefox（AMO）は提出・承認済み、Chrome Web Storeは未提出です。掲載文・プライバシー欄の下書きは [docs/store-listing.md](docs/store-listing.md) にあります。
 
 **共通**
 - 掲載ページの説明文に「入力・選択した文字列をPubChemに送信する」旨を明記する
-- `PRIVACY.md` を公開URL（GitHub Pages等）に置き、そのURLをストアのプライバシーポリシー欄に登録する
+- `PRIVACY.md` は GitHub Pages（`https://sakaaga.github.io/chem-viewer/privacy/`）で公開しています。そのURLをストアのプライバシーポリシー欄に登録する
 - GHS情報が参考表示であること（SDSの代替ではない）を説明文にも書く
 
 **Firefox（AMO）**
@@ -104,7 +106,7 @@ F12 →「コンソール」で `Chem Viewer:` から始まるメッセージを
 - 上記のため `strict_min_version` は `142.0` です。`data_collection_permissions` をデスクトップ（140〜）とAndroid（142〜）の両方が認識できる最小版に合わせており、AMOの検証で出る「Android版の最低バージョン」警告を避けています。Androidは右クリックメニュー・サイドバー・ショートカットがないため、実質的にデスクトップ向けです
 - ハイライトをクリックしたときのポップアップ自動表示は、右クリックメニュー・ショートカットと同じ`browser.action.openPopup()`を使っています。ブラウザによってはメッセージ経由の呼び出しでユーザー操作とみなされず失敗することがあり、その場合はツールバーのバッジから開く案内を表示します
 - `browser_specific_settings.gecko.id` は GUID（`{76ac8e19-a318-485f-aa10-fced234a3292}`）に確定済みです。**公開後は変更できず、変更すると別の拡張機能として扱われる**ため、このIDは控えて今後も変えないでください
-- ソースコード提出: 本リポジトリ（`build.mjs`・両マニフェスト・`THIRD_PARTY_NOTICES.md`を含む）をそのまま提出できます。`libs/`は公式パッケージの無改変コピーで、取得手順とSHA-256は `THIRD_PARTY_NOTICES.md` に記載
+- ソースコード提出（AMOでは提出済み）: 本リポジトリ（`build.mjs`・両マニフェスト・`THIRD_PARTY_NOTICES.md`を含む）をそのまま提出できます。`libs/`は公式パッケージの無改変コピーで、取得手順とSHA-256は `THIRD_PARTY_NOTICES.md` に記載
 
 **Chrome（Chrome Web Store）**
 - 2026年8月1日施行のポリシー更新により、目的に直接関係するかを問わず、収集・送信するデータの開示が求められます。Developer Dashboardの「プライバシー」欄で、送信するデータ（ユーザー入力の検索語・ウェブサイトのコンテンツ）を申告してください
@@ -161,4 +163,4 @@ node build.mjs      # dist/firefox, dist/chrome とzipを生成（検査つき�
 
 ## 引き継ぎ
 
-未解決の問題・未検証事項・設計メモ・引き継ぎ手順は [HANDOFF.md](HANDOFF.md) を参照してください。
+未解決の問題・未検証事項・設計メモ・引き継ぎ手順は [HANDOFF.md](HANDOFF.md) を、実機での動作確認の手順は [docs/manual-test-checklist.md](docs/manual-test-checklist.md) を参照してください。

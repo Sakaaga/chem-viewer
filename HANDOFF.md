@@ -3,7 +3,7 @@
 このプロジェクトの作業を、別のChat・別の担当者が引き継ぐための資料です。**作業のたびに更新してください。**
 （作業用のサンドボックスは途中で何度もリセットされ、手元のファイルが消えます。正本は常にこのGitHubリポジトリです。）
 
-最終更新: 2026-11-06
+最終更新: 2026-11-08
 
 ## 0. 引き継いだら最初にやること
 1. リポジトリを取得（公開リポジトリなのでトークン不要）: `git clone https://github.com/Sakaaga/chem-viewer.git`
@@ -13,7 +13,7 @@
 5. 作業したら、このファイルの「3」を更新してコミット・pushする
 
 ## 1. プロジェクトの概要
-- **化学式ビューア（Chem Viewer）**: Firefox / Chrome 用ブラウザ拡張（Manifest V3）。v0.3.0（未リリース・未提出）
+- **化学式ビューア（Chem Viewer）**: Firefox / Chrome 用ブラウザ拡張（Manifest V3）。v0.3.0。**Firefox版はAMOで審査承認・公開済み（2026-11-07）**。Chrome Web Storeは未提出。GitHubのタグ・Releaseは未作成
 - 選択・入力した化学式／化合物名（日本語名も可）／SMILES を **PubChem** で検索し、分子式・分子量・SMILES・InChIKey・CAS番号・別名・GHS危険有害性情報（日本語訳つき）・3D構造／2D画像を表示する
 - 日本語名検索と日本語表示は **Wikidata** 経由（外部送信先は PubChem と Wikidata のみ）
 - ページ内の化学式のハイライト（任意・既定OFF）。クリックすると選択検索と同じ経路でポップアップに結果を出す
@@ -51,17 +51,19 @@ npm run check                     # 実Chromiumでの確認（要 playwright ins
 - セキュリティ確認（2026-11-06）: 構文・シークレット混入・危険な書き込み処理・Actions権限・`npm audit` を確認し、問題なし。Wikidata応答の項目ID（`Q123` 形式）を検証してからURLに使うよう修正し（`isWikidataId`）、`pubchem-link` に `rel="noopener noreferrer"` を付けた。GitHubのCodeQL・Dependabot・シークレットスキャンのアラート件数は、使用したトークンに権限がなく未確認なので、Securityタブで確認すること
 
 ### 3-3. 未検証（実機・実サーバーで一度も確認していない）
+手順と期待値は `docs/manual-test-checklist.md`。結果はそこに記入してから、この項を更新する。
 - 実際のFirefox/Chromeでの動作全般（これまでの検証はjsdomと偽fetchのみ）。特に: ハイライトをクリックしたときのポップアップ自動表示（`action.openPopup()`）、全サイト権限の許可フロー、Chromeのサイドパネル、Wikipedia等の実ページでのハイライト
 - **Wikidata APIの実通信**（`wbsearchentities` / `wbgetentities` / `list=search` の `haswbstatement:P662=`、CORSの `origin=*`）。仕様は公式ドキュメントに基づくが、実応答は未確認
 - PubChemの **GHS（PUG View）パーサ**が、実応答の構造を正しく読めているか
 - 分子式検索（`fastformula`）が、水和物を展開した式（例 `CuH10O9S`）や `D2O` を受け付けるか。ローカルでは受理しているが、PubChem側で見つからない可能性がある
 - addons-linter は実行済み（エラー0、警告1=3Dmol.js内のevalで既知・対処済み）。ただし実際のAMO審査・Chrome審査は未提出
 
-### 3-4. 提出まわり（一部着手: 2026-11-06）
+### 3-4. 提出まわり（Firefox承認済み: 2026-11-07。Chromeは未提出）
 
-- 掲載文（日英）・Chrome「プライバシー」欄・権限の理由の下書きを `docs/store-listing.md` に追加した（ユーザーによる確認・手直しはこれから）
-- プライバシーポリシーの公開: GitHub Pagesを有効化した（main / ルート、`_config.yml` と `privacy-policy.md` が `PRIVACY.md` を取り込む）。公開URLは `https://sakaaga.github.io/chem-viewer/privacy/`。Pagesのビルドは成功と表示されたが、**このURLが実際に開けて内容が正しいかは未確認**（この環境から github.io に接続できないため）。ストアに登録する前に、ブラウザで開いて確認すること
-- 未了: Chrome Developer Dashboardのプライバシー欄の申告、AMO・Chromeへの実提出、スクリーンショット類の用意
+- **AMO（Firefox）**: v0.3.0 が審査承認され、公開バージョンになった（実験的アドオンとして登録）。提出したzipとソースzipは、いずれも `aee751c` から `node build.mjs` / `git archive` で作成したもの（ソースzipから再ビルドした `dist/firefox` が提出zipと完全一致することを確認済み。ユーザーが実際にアップロードしたファイルが同一かは未確認）。AMOの公開URLはここに未記載（ユーザーに確認して追記）。アドオンID `{76ac8e19-a318-485f-aa10-fced234a3292}` は変更不可
+- 掲載文（日英）・Chrome「プライバシー」欄・権限の理由の下書きは `docs/store-listing.md`（ユーザーによる確認・手直しは未了）
+- プライバシーポリシーの公開: GitHub Pages（main / ルート、`_config.yml` と `privacy-policy.md` が `PRIVACY.md` を取り込む）。公開URLは `https://sakaaga.github.io/chem-viewer/privacy/`。Pagesのビルドは成功と表示されたが、**このURLが実際に開けて内容が正しいかは未確認**（この環境から github.io に接続できないため）。Chromeに登録する前に、ブラウザで開いて確認すること
+- 未了: Chrome Developer Dashboardのプライバシー欄の申告と実提出、スクリーンショット類の用意、タグ `v0.3.0` のpush（Release自動添付）。公開版でSMILES欄が埋まるかの確認（`docs/manual-test-checklist.md` の項目A-1）。埋まらなければ、要求プロパティ名を `ConnectivitySMILES` に変えて v0.3.1 を出す
 
 ### 3-5. 既知の制限・検討中の案
 - 既知の制限は `README.md` の「既知の制限」を参照（PDFビューア内は非対応、`B52`/`F16`/`N95` のような「単一元素＋数字」は誤検出が残る、iframe内は対象外 など）
