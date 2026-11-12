@@ -3,7 +3,7 @@
 このプロジェクトの作業を、別のChat・別の担当者が引き継ぐための資料です。**作業のたびに更新してください。**
 （作業用のサンドボックスは途中で何度もリセットされ、手元のファイルが消えます。正本は常にこのGitHubリポジトリです。）
 
-最終更新: 2026-11-08
+最終更新: 2026-11-09
 
 ## 0. 引き継いだら最初にやること
 1. リポジトリを取得（公開リポジトリなのでトークン不要）: `git clone https://github.com/Sakaaga/chem-viewer.git`
@@ -23,7 +23,7 @@
 ## 2. 開発の進め方
 ```
 node build.mjs                    # dist/firefox, dist/chrome とzip（構文・ロケール・参照ファイル等の自動検査つき）
-cd tests && npm ci && npm run all # テスト60件（unit 37 + bg 7 + dom 16）＋ 同梱ライブラリ2件のSHA-256検査
+cd tests && npm ci && npm run all # テスト64件（unit 41 + bg 7 + dom 16）＋ 同梱ライブラリ2件のSHA-256検査
 npm run check                     # 実Chromiumでの確認（要 playwright install。PubChemへ実通信。CIでは実行しない）
 ```
 - Node.js 22 以上。依存パッケージは tests/ 内のみ（配布物は依存ゼロ）
@@ -49,6 +49,15 @@ npm run check                     # 実Chromiumでの確認（要 playwright ins
 - リポジトリ設定（2026-11-06にAPIで確認。この日に私が変更したものではない）: シークレットスキャン＋プッシュ保護=有効、Dependabotアラート・セキュリティ更新=有効、脆弱性の非公開報告=有効、Actions既定権限=読み取りのみ、mainの強制push・削除=禁止、wiki/projects=無効、マージ後ブランチ自動削除=有効
 
 - セキュリティ確認（2026-11-06）: 構文・シークレット混入・危険な書き込み処理・Actions権限・`npm audit` を確認し、問題なし。Wikidata応答の項目ID（`Q123` 形式）を検証してからURLに使うよう修正し（`isWikidataId`）、`pubchem-link` に `rel="noopener noreferrer"` を付けた。GitHubのCodeQL・Dependabot・シークレットスキャンのアラート件数は、使用したトークンに権限がなく未確認なので、Securityタブで確認すること
+
+### 3-2b. 実サーバー応答の確認と修正（2026-11-09）
+ユーザーがブラウザで取得した実際のAPI応答（作業環境からはPubChemに接続できない）で確認した結果:
+- **SMILES**: `CanonicalSMILES` を要求しても、応答のキーは `ConnectivitySMILES`。3-1の正規化（`props.smiles`）で値が入る（応答の形を確認済み）
+- **水和物の分子式検索**: `fastformula/CuH10O9S` は3件のCIDを返す（先頭を採用、残りは候補）。展開後のHill式が受け付けられることを確認
+- **GHSのパーサは、実応答の構造を読めていなかった（修正済み）**: 危険有害性情報は `Information` 要素の `Name`（`"Pictogram(s)"` / `"GHS Hazard Statements"`）で区別されるが、旧実装は節の見出し（`"GHS Classification"` 固定）で判定していたため、**実応答では常に「GHS情報なし」になっていた**（公開済みv0.3.0に影響）。`Name` で判定するよう修正。情報源（`ReferenceNumber`）ごとに同じ項目が繰り返され区分も食い違うため、**最初の情報源（EU CLP）だけ**を採用。件数上限は5→20に拡大（安全に関わる一覧を切り捨てないため）
+- **日本語名検索**: Wikidata検索（`wbsearchentities`）は日本語ラベルが無い項目で英語ラベルを返す（アスピリンは `label: "aspirin"`、日本語は別名で一致）。旧実装は英語ラベルを「日本語名」として表示していたため、一致した日本語の文字列（`match.text`）を使うよう修正。`wbgetentities` のP662（PubChem CID）は実際に存在することを確認
+- 残る制限: 表示言語を日本語に切り替えたとき、日本語ラベルが無い項目（アスピリン等）は英語名のまま（`fetchJapaneseLabelByCid` は `labels.ja` のみ参照）。別名（`aliases.ja`）の参照は未実装
+- テスト: 上記の応答の構造を保った縮約版で `tests/unit.mjs` に4件追加（修正前のコードでは失敗することを確認済み）。**修正を公開版に反映するには v0.3.1 の提出が必要**（`manifest.*.json` と `package.json` のversionを上げ、AMOに新バージョンを提出）
 
 ### 3-3. 未検証（実機・実サーバーで一度も確認していない）
 手順と期待値は `docs/manual-test-checklist.md`。結果はそこに記入してから、この項を更新する。

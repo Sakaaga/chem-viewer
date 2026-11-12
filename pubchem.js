@@ -177,7 +177,15 @@ async function fetchCidByJapaneseNameWithLabel(name) {
     const claims = entitiesData?.entities?.[candidate.id]?.claims?.P662;
     const cid = Number(claims?.[0]?.mainsnak?.datavalue?.value);
     if (Number.isSafeInteger(cid) && cid > 0) {
-      return { cid, label: candidate.label || name };
+      // wbsearchentities は、日本語ラベルが無い項目では英語ラベルを返す（別名の一致で見つかった場合など）。
+      // 表示名には、日本語ラベルがあればそれ、無ければ一致した日本語の文字列を使い、英語名を日本語名として出さない。
+      const jaLabel =
+        candidate.display?.label?.language === "ja" && candidate.display.label.value
+          ? candidate.display.label.value
+          : candidate.match?.language === "ja" && candidate.match.text
+            ? candidate.match.text
+            : name;
+      return { cid, label: jaLabel };
     }
   }
   return null;
@@ -246,21 +254,30 @@ async function fetchGHSClassification(cid) {
   const sections = data?.Record?.Section;
   if (!Array.isArray(sections)) return null;
 
+  // 実際の応答では、ピクトグラム・危険有害性情報は「Information」の各要素に入っており、種類は要素の Name
+  // （"Pictogram(s)" / "GHS Hazard Statements"）で区別される（節の見出しは "GHS Classification" 固定）。
+  // 情報源（ReferenceNumber）ごとに内容が重複・食い違うため、最初に現れた危険有害性情報の情報源だけを使う
+  // （先頭はEU CLP規則の整合分類）。複数の情報源を混ぜると、矛盾する区分が並んでしまう。
   const pictograms = new Set();
   const statements = new Set();
+  let sourceRef; // 採用する情報源。最初の "GHS Hazard Statements" で確定する
 
   function walk(section) {
-    const heading = String(section.TOCHeading || "");
     for (const info of section.Information || []) {
+      const name = String(info?.Name || section.TOCHeading || "");
+      const isStatements = name.includes("Hazard Statements");
+      const isPictograms = name.includes("Pictogram");
+      if (!isStatements && !isPictograms) continue;
+      if (isStatements && sourceRef === undefined) sourceRef = info.ReferenceNumber ?? null;
+      if (sourceRef !== undefined && sourceRef !== null && info.ReferenceNumber !== sourceRef) continue;
       for (const v of info?.Value?.StringWithMarkup || []) {
         const text = String(v.String || "").trim();
-        if (heading.includes("Pictogram")) {
+        if (isPictograms) {
           // ピクトグラムは文字列ではなくアイコン(Markup)として入っており、名前は Extra にある
           for (const m of v.Markup || []) {
             if (m && typeof m.Extra === "string" && m.Extra.trim()) pictograms.add(m.Extra.trim());
           }
-          if (text) pictograms.add(text);
-        } else if (heading.includes("Hazard Statements") && text) {
+        } else if (text) {
           statements.add(text.slice(0, 160));
         }
       }
@@ -270,7 +287,8 @@ async function fetchGHSClassification(cid) {
   sections.forEach(walk);
 
   if (pictograms.size === 0 && statements.size === 0) return null;
-  return { pictograms: [...pictograms].slice(0, 6), statements: [...statements].slice(0, 5) };
+  // 安全に関わる一覧なので、件数の上限は十分に大きくとる（以前の5件では途中で切れる化合物がある）
+  return { pictograms: [...pictograms].slice(0, 9), statements: [...statements].slice(0, 20) };
 }
 
 // GHS危険有害性情報（Hコード）の日本語訳。

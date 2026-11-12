@@ -321,6 +321,78 @@ await test("translateHazardStatement は単体でも使える（Hコードが無
   assert.equal(ChemAPI.translateHazardStatement("no code here"), "no code here");
 });
 
+console.log("\n[実サーバーの応答（2026-11に採取）の構造での確認]");
+// アセトン(CID 180)のPUG View応答の構造を保った縮約版。危険有害性情報は Information の Name で区別され、
+// 情報源（ReferenceNumber）ごとに同じ項目が繰り返される。
+const ghsInfo = (ref, name, strings, markups) => ({
+  ReferenceNumber: ref, Name: name,
+  Value: { StringWithMarkup: strings.map((s, i) => ({ String: s, ...(markups ? { Markup: markups[i] } : {}) })) },
+});
+const REAL_GHS = { Record: { Section: [{ TOCHeading: "Safety and Hazards", Section: [{ TOCHeading: "Hazards Identification", Section: [{
+  TOCHeading: "GHS Classification",
+  Information: [
+    ghsInfo(180, "Pictogram(s)", ["          "], [[{ Type: "Icon", Extra: "Flammable" }, { Type: "Icon", Extra: "Irritant" }]]),
+    ghsInfo(180, "Signal", ["Danger"]),
+    ghsInfo(180, "GHS Hazard Statements", ["H225: Highly Flammable liquid and vapor [Danger Flammable liquids]", "H319: Causes serious eye irritation [Warning Serious eye damage/eye irritation]", "H336: May cause drowsiness or dizziness [Warning Specific target organ toxicity, single exposure; Narcotic effects]"]),
+    ghsInfo(180, "Precautionary Statement Codes", ["P210, P233"]),
+    ghsInfo(90, "Pictogram(s)", ["          "], [[{ Type: "Icon", Extra: "Flammable" }, { Type: "Icon", Extra: "Irritant" }]]),
+    ghsInfo(90, "GHS Hazard Statements", ["H225 (> 99.9%): Highly Flammable liquid and vapor [Danger Flammable liquids]", "H319 (> 99.9%): Causes serious eye irritation [Warning Serious eye damage/eye irritation]"]),
+    ghsInfo(162, "Pictogram(s)", ["          "], [[{ Type: "Icon", Extra: "Flammable" }, { Type: "Icon", Extra: "Irritant" }, { Type: "Icon", Extra: "Health Hazard" }]]),
+    ghsInfo(162, "GHS Hazard Statements", ["H225: Highly Flammable liquid and vapor", "H320: Causes eye irritation", "H372: Causes damage to organs through prolonged or repeated exposure"]),
+  ],
+}] }] }] } };
+await test("GHS: 実応答の構造（Information の Name で区別）から、ピクトグラムと危険有害性情報を取り出す", async () => {
+  const fetchImpl = async (url) => {
+    if (url.includes("pug_view")) return json(200, REAL_GHS);
+    if (url.includes("/name/")) return json(200, { IdentifierList: { CID: [180] } });
+    if (url.includes("/property/")) return json(200, PROPS({ CID: 180 }));
+    if (url.includes("/synonyms/")) return json(200, { InformationList: { Information: [{ Synonym: [] }] } });
+    return text(200, "sdf");
+  };
+  const { ChemAPI } = makeEnv({ fetchImpl });
+  const r = await ChemAPI.resolveCompound("acetone");
+  assert.ok(r.ghs, "GHS が取得できていません（実応答の構造を読めていない）");
+  assert.deepEqual(plain(r.ghs.pictograms), ["Flammable", "Irritant"]);
+  assert.equal(r.ghs.statements.length, 3, "最初の情報源の3件だけを使う（他の情報源の食い違う区分を混ぜない）");
+  assert.ok(r.ghs.statements[0].startsWith("H225:") && r.ghs.statements[2].startsWith("H336:"));
+  assert.equal(r.ghs.statementsJa[1], "H319: 強い眼刺激");
+  assert.ok(!r.ghs.statements.some((s) => s.startsWith("H320") || s.startsWith("H372")), "別の情報源のコードが混ざっています");
+});
+await test("GHS: 危険有害性情報が20件までは切り捨てない（安全に関わる一覧）", async () => {
+  const many = Array.from({ length: 12 }, (_, i) => `H${300 + i}: statement ${i}`);
+  const data = { Record: { Section: [{ TOCHeading: "GHS Classification", Information: [ghsInfo(1, "GHS Hazard Statements", many)] }] } };
+  const fetchImpl = async (url) => (url.includes("pug_view") ? json(200, data) : url.includes("/name/") ? json(200, { IdentifierList: { CID: [1] } }) : url.includes("/property/") ? json(200, PROPS()) : url.includes("/synonyms/") ? json(200, { InformationList: { Information: [{ Synonym: [] }] } }) : text(200, "sdf"));
+  const { ChemAPI } = makeEnv({ fetchImpl });
+  assert.equal((await ChemAPI.resolveCompound("x")).ghs.statements.length, 12);
+});
+await test("日本語名検索: 日本語ラベルが無い項目（別名で一致）は、英語ラベルではなく一致した日本語を名前にする", async () => {
+  // 実際の wbsearchentities 応答（アスピリン）の形: label は英語、match が日本語の別名
+  const search = { search: [{ id: "Q18216", label: "aspirin", display: { label: { value: "aspirin", language: "en" } }, match: { type: "alias", language: "ja", text: "\u30a2\u30b9\u30d4\u30ea\u30f3" } }] };
+  const fetchImpl = async (url) => {
+    if (url.includes("/name/")) return json(404, {});
+    if (url.includes("action=wbsearchentities")) return json(200, search);
+    if (url.includes("action=wbgetentities")) return json(200, { entities: { Q18216: { claims: { P662: [{ mainsnak: { datavalue: { value: "2244", type: "string" } } }] } } } });
+    if (url.includes("/property/")) return json(200, PROPS({ CID: 2244 }));
+    return text(200, "sdf");
+  };
+  const { ChemAPI } = makeEnv({ fetchImpl });
+  const r = await ChemAPI.resolveCompound("\u30a2\u30b9\u30d4\u30ea\u30f3", { light: true });
+  assert.equal(r.cid, 2244);
+  assert.equal(r.jaName, "\u30a2\u30b9\u30d4\u30ea\u30f3");
+});
+await test("日本語名検索: 日本語ラベルがある項目では、そのラベルを使う", async () => {
+  const search = { search: [{ id: "Q1", label: "\u6c34", display: { label: { value: "\u6c34", language: "ja" } }, match: { type: "label", language: "ja", text: "\u6c34" } }] };
+  const fetchImpl = async (url) => {
+    if (url.includes("/name/")) return json(404, {});
+    if (url.includes("action=wbsearchentities")) return json(200, search);
+    if (url.includes("action=wbgetentities")) return json(200, { entities: { Q1: { claims: { P662: [{ mainsnak: { datavalue: { value: "962" } } }] } } } });
+    if (url.includes("/property/")) return json(200, PROPS({ CID: 962 }));
+    return text(200, "sdf");
+  };
+  const { ChemAPI } = makeEnv({ fetchImpl });
+  assert.equal((await ChemAPI.resolveCompound("\u6c34", { light: true })).jaName, "\u6c34");
+});
+
 console.log("\n[追加プロパティ・ライトモード]");
 await test("ExactMass/XLogP/TPSA/水素結合ドナー・アクセプタを取得する", async () => {
   const fetchImpl = async (url) => {
