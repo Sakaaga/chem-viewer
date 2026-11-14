@@ -3,7 +3,7 @@
 このプロジェクトの作業を、別のChat・別の担当者が引き継ぐための資料です。**作業のたびに更新してください。**
 （作業用のサンドボックスは途中で何度もリセットされ、手元のファイルが消えます。正本は常にこのGitHubリポジトリです。）
 
-最終更新: 2026-11-09
+最終更新: 2026-11-13
 
 ## 0. 引き継いだら最初にやること
 1. リポジトリを取得（公開リポジトリなのでトークン不要）: `git clone https://github.com/Sakaaga/chem-viewer.git`
@@ -58,6 +58,10 @@ npm run check                     # 実Chromiumでの確認（要 playwright ins
 - **日本語名検索**: Wikidata検索（`wbsearchentities`）は日本語ラベルが無い項目で英語ラベルを返す（アスピリンは `label: "aspirin"`、日本語は別名で一致）。旧実装は英語ラベルを「日本語名」として表示していたため、一致した日本語の文字列（`match.text`）を使うよう修正。`wbgetentities` のP662（PubChem CID）は実際に存在することを確認
 - 残る制限: 表示言語を日本語に切り替えたとき、日本語ラベルが無い項目（アスピリン等）は英語名のまま（`fetchJapaneseLabelByCid` は `labels.ja` のみ参照）。別名（`aliases.ja`）の参照は未実装
 - テスト: 上記の応答の構造を保った縮約版で `tests/unit.mjs` に4件追加（修正前のコードでは失敗することを確認済み）。**修正を公開版に反映するには v0.3.1 の提出が必要**（`manifest.*.json` と `package.json` のversionを上げ、AMOに新バージョンを提出）
+
+### 3-2c. v0.3.1（2026-11-13）
+- manifest（Firefox/Chrome）と `package.json` の version を 0.3.1 に更新。3-1（SMILES）・3-2b（GHS・日本語名）の修正を含む。AMOへの提出は未了（ユーザーが実施）。タグ `v0.3.1` は未作成（pushするとReleaseにzipが自動添付される）
+- 実機確認（Firefox・公開版または手元のビルド）で、A-1（SMILES欄が空）とA-4（硫酸でもGHSが出ない）が不具合として報告された。いずれも `main` で修正済み。どの版を動かしていたかは未確認
 
 ### 3-3. 未検証（実機・実サーバーで一度も確認していない）
 手順と期待値は `docs/manual-test-checklist.md`。結果はそこに記入してから、この項を更新する。
