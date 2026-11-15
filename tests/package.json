@@ -13,7 +13,7 @@
   },
   "devDependencies": {
     "jsdom": "^31.0.0",
-    "playwright": "^1.63.0"
+    "playwright": "^1.65.0"
   },
   "description": "Chem Viewer のテスト（単体・background・ページ内ハイライトの統合・同梱ライブラリの整合性）"
 }
