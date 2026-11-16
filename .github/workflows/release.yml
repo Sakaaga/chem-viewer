@@ -1,6 +1,8 @@
 name: Release
 
-# v0.3.0 のようなタグをpushすると、Firefox用・Chrome用のzipとソースzipをReleaseに添付する
+# v0.3.0 のようなタグをpushすると、Firefox用・Chrome用のzipとソースzipをReleaseに添付する。
+# 安定版は固定名のzip（chem-extension-firefox.zip / chem-extension-chrome.zip）も添付する。
+# v0.4.0-beta.1 のようにハイフンを含むタグはプレリリースとして扱い、「最新版」を更新しない
 on:
   push:
     tags: ["v*"]
@@ -46,4 +48,18 @@ jobs:
       - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" dist/*.zip --repo "$GITHUB_REPOSITORY" --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
+        run: |
+          # 版数入りのzip（例: chem-extension-firefox-v0.3.1.zip）とソースzipは常に添付する
+          ASSETS=(dist/*.zip)
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            # v0.4.0-beta.1 のような試験版: プレリリース扱いにし、「最新版」は更新しない
+            gh release create "$GITHUB_REF_NAME" "${ASSETS[@]}" --repo "$GITHUB_REPOSITORY" \
+              --title "$GITHUB_REF_NAME" --generate-notes --verify-tag --prerelease --latest=false
+          else
+            # 安定版: 固定名のコピーも添付する（releases/latest/download/<固定名> で常に最新版を取得できる）
+            mkdir -p dist/latest
+            cp dist/chem-extension-firefox-*.zip dist/latest/chem-extension-firefox.zip
+            cp dist/chem-extension-chrome-*.zip dist/latest/chem-extension-chrome.zip
+            gh release create "$GITHUB_REF_NAME" "${ASSETS[@]}" dist/latest/*.zip --repo "$GITHUB_REPOSITORY" \
+              --title "$GITHUB_REF_NAME" --generate-notes --verify-tag --latest
+          fi
