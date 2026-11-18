@@ -217,8 +217,29 @@ button:disabled {
 }
 .viewer-controls {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
   margin-top: 8px;
+}
+.viewer-3d-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.viewer-controls select {
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid var(--input-border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--fg);
+}
+.view-toggle-btn.active {
+  background: var(--accent);
+  color: white;
 }
 .view-toggle-btn {
   background: transparent;
@@ -326,4 +347,48 @@ button:disabled {
   font-size: 12px;
   color: var(--muted);
   padding: 6px 8px;
+}
+
+/* 注意書き（ベータ版の警告など）。色だけに頼らず、枠線と文言でも伝える */
+.warn-box {
+  border: 1px solid #d97706;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 反応式の原子数収支 */
+#reaction-result {
+  margin-bottom: 10px;
+}
+#reaction-verdict {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+#reaction-verdict.reaction-ok {
+  color: #16a34a;
+}
+#reaction-verdict.reaction-ng {
+  color: #dc2626;
+}
+.reaction-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 24px;
+  gap: 4px;
+  font-size: 12px;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.reaction-row.reaction-head {
+  color: var(--muted);
+}
+.reaction-row.reaction-mismatch {
+  font-weight: 600;
+}
+.molar-calc input[type="number"] {
+  width: 76px;
 }

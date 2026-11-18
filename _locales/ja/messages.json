@@ -167,7 +167,7 @@
     "message": "PubChem上に両方存在しない化合物もあるため、優先順位側が無い場合はもう片方にフォールバックします。"
   },
   "autoHighlightLabel": {
-    "message": "ページ内の化学式らしき文字列を自動検出してハイライトする"
+    "message": "ページ内の化学式らしき文字列を自動検出してハイライトする（ベータ版）"
   },
   "autoHighlightHint1": {
     "message": "有効にすると、数字を含む分子式パターン（例: H2O, C6H12O6）にうっすら下線を引きます。ホバーしただけでは通信は発生せず、"
@@ -261,5 +261,91 @@
   },
   "clipboardLabelCas": {
     "message": "CAS登録番号"
+  },
+  "labelIupac": {
+    "message": "IUPAC名"
+  },
+  "unknownName": {
+    "message": "(不明)"
+  },
+  "styleLabel": {
+    "message": "3D表示スタイル"
+  },
+  "styleBallStick": {
+    "message": "球棒モデル"
+  },
+  "styleStick": {
+    "message": "スティック"
+  },
+  "styleSphere": {
+    "message": "空間充填"
+  },
+  "styleLine": {
+    "message": "ワイヤー"
+  },
+  "spinLabel": {
+    "message": "自動回転"
+  },
+  "atomLabelsLabel": {
+    "message": "元素ラベル"
+  },
+  "savePngLabel": {
+    "message": "PNG保存"
+  },
+  "saveSdfLabel": {
+    "message": "SDF保存"
+  },
+  "molarGramsLabel": {
+    "message": "質量（g）"
+  },
+  "molarMolLabel": {
+    "message": "物質量（mol）"
+  },
+  "statusFromCache": {
+    "message": "保存済みの検索結果を表示しています（ブラウザを閉じるまで・最長6時間）。最新の情報にするには、設定画面でキャッシュを削除してください。"
+  },
+  "reactionBalanced": {
+    "message": "釣り合っています（左辺と右辺で各元素の原子数が一致）"
+  },
+  "reactionUnbalanced": {
+    "message": "釣り合っていません（係数を見直してください）"
+  },
+  "reactionElementHeader": {
+    "message": "元素"
+  },
+  "reactionLeftHeader": {
+    "message": "左辺"
+  },
+  "reactionRightHeader": {
+    "message": "右辺"
+  },
+  "reactionOfflineNote": {
+    "message": "反応式の確認は端末内だけで計算し、何も送信しません。イオンの電荷（Na+ など）には対応していません。"
+  },
+  "cacheLabel": {
+    "message": "検索結果をキャッシュする"
+  },
+  "cacheHint": {
+    "message": "履歴に残っている検索の結果だけを、メモリ上に最長6時間保存して、同じ検索の再表示を速くします。ブラウザを閉じる・再起動すると自動的に削除され、ディスクには残りません。プライベートウィンドウでは使いません。"
+  },
+  "cacheClearButton": {
+    "message": "キャッシュを削除"
+  },
+  "cacheCleared": {
+    "message": "キャッシュを削除しました。"
+  },
+  "autoHighlightBetaWarning": {
+    "message": "⚠ ベータ版の機能です。動作が不安定な場合があります（ページの表示の乱れ、動作が重くなる、誤検出など）。問題が起きたら、このチェックを外して保存してください。"
+  },
+  "cacheCountLabel": {
+    "message": "現在のキャッシュ: $COUNT$ 件",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "clipboardLabelIupac": {
+    "message": "IUPAC名"
   }
 }

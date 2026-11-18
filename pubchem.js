@@ -10,6 +10,11 @@ const HISTORY_KEY = "searchHistory";
 const SETTINGS_KEY = "settings";
 const MAX_QUERY_LENGTH = 200; // 誤って長文を選択した場合に、第三者へ大量の文章を送らないための上限
 const MAX_CANDIDATES = 5; // 分子式検索で異性体が複数ある場合に提示する候補数の上限
+const CACHE_KEY = "resultCache"; // storage.session（メモリ上のみ。ブラウザを閉じる・再起動すると消える）
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 長時間ブラウザを開き続けても古い結果を出さないための有効期限
+const CACHE_MAX_ENTRIES = 50; // storage.session の容量（約10MB）を使い切らないための件数上限
+const CACHE_MAX_ENTRY_CHARS = 400000; // 1件あたりの大きさの上限（巨大な分子の構造データは保存しない）
+const VIEWER_STYLES = ["ballstick", "stick", "sphere", "line"];
 
 // ---------- 設定 ----------
 
@@ -19,6 +24,8 @@ const DEFAULT_SETTINGS = {
   preferredStructure: "3d", // "3d" または "2d"
   autoHighlight: false, // ページ内自動ハイライト（デフォルトOFF）
   resultLanguage: "en", // "en" または "ja"（化合物名・GHS文言の表示言語）
+  cacheEnabled: true, // 検索結果のキャッシュ（履歴に残っている検索のみ。ブラウザを閉じると消える）
+  viewerStyle: "ballstick", // 3D表示スタイル
 };
 
 // ストレージの中身は信用せず、型と範囲を必ず正規化して使う
@@ -34,6 +41,8 @@ function sanitizeSettings(raw) {
     preferredStructure: s.preferredStructure === "2d" ? "2d" : "3d",
     autoHighlight: s.autoHighlight === true,
     resultLanguage: s.resultLanguage === "ja" ? "ja" : "en",
+    cacheEnabled: s.cacheEnabled !== false,
+    viewerStyle: VIEWER_STYLES.includes(s.viewerStyle) ? s.viewerStyle : DEFAULT_SETTINGS.viewerStyle,
   };
 }
 
@@ -206,7 +215,7 @@ async function fetchJapaneseLabelByCid(cid) {
 
 async function fetchProperties(cid) {
   const props =
-    "MolecularFormula,MolecularWeight,IUPACName,CanonicalSMILES,InChIKey," +
+    "Title,MolecularFormula,MolecularWeight,IUPACName,CanonicalSMILES,InChIKey," +
     "ExactMass,XLogP,TPSA,HBondDonorCount,HBondAcceptorCount";
   const data = await request(`${PUBCHEM_BASE}/compound/cid/${cid}/property/${props}/JSON`);
   const p = data?.PropertyTable?.Properties?.[0];
@@ -218,6 +227,21 @@ async function fetchProperties(cid) {
     (v) => typeof v === "string" && v.length > 0
   );
   return { ...p, smiles: smiles ?? null };
+}
+
+// 複数CIDの一般名（Title）を1回の問い合わせで取得する（異性体候補のドロップダウン表示用）。
+// 戻り値は { "CID文字列": "名前" }。失敗時の扱いは呼び出し側（補助情報なので、無くても検索結果は成立させる）。
+async function fetchTitles(cids) {
+  const list = sanitizeCids(cids, MAX_CANDIDATES + 1);
+  if (list.length === 0) return {};
+  const data = await request(`${PUBCHEM_BASE}/compound/cid/${list.join(",")}/property/Title/JSON`);
+  const out = {};
+  for (const p of data?.PropertyTable?.Properties || []) {
+    if (Number.isSafeInteger(p?.CID) && p.CID > 0 && typeof p.Title === "string" && p.Title.trim()) {
+      out[String(p.CID)] = p.Title.trim().slice(0, 100);
+    }
+  }
+  return out;
 }
 
 // CAS登録番号。PubChemは専用プロパティとしては提供していないため、別名（Synonyms）の中から
@@ -346,7 +370,7 @@ async function buildResult(cid, matchedBy, { light = false, jaName = null, other
   if (!props) return null;
 
   if (light) {
-    return { cid, props, matchedBy, jaName, otherCids, sdf: null, synonyms: [], casNumber: null, ghs: null, imageUrl: get2DImageUrl(cid) };
+    return { cid, props, matchedBy, jaName, otherCids, candidateTitles: {}, sdf: null, synonyms: [], casNumber: null, ghs: null, imageUrl: get2DImageUrl(cid) };
   }
 
   const settings = await getSettings();
@@ -355,9 +379,10 @@ async function buildResult(cid, matchedBy, { light = false, jaName = null, other
   if (!sdf) sdf = await second(cid);
 
   // 別名・GHSは補助情報。ここが失敗しても検索結果全体は成立させる。
-  const [allSynonyms, ghsRaw] = await Promise.all([
+  const [allSynonyms, ghsRaw, candidateTitles] = await Promise.all([
     fetchSynonymsRaw(cid).catch(() => []),
     fetchGHSClassification(cid).catch(() => null),
+    otherCids.length > 0 ? fetchTitles([cid, ...otherCids]).catch(() => ({})) : Promise.resolve({}),
   ]);
 
   const casNumber = extractCasNumber(allSynonyms);
@@ -366,7 +391,7 @@ async function buildResult(cid, matchedBy, { light = false, jaName = null, other
     ? { ...ghsRaw, statementsJa: ghsRaw.statements.map(translateHazardStatement) }
     : null;
 
-  return { cid, props, matchedBy, jaName, otherCids, sdf, synonyms, casNumber, ghs, imageUrl: get2DImageUrl(cid) };
+  return { cid, props, matchedBy, jaName, otherCids, candidateTitles, sdf, synonyms, casNumber, ghs, imageUrl: get2DImageUrl(cid) };
 }
 
 // CID→プロパティ→（構造データ・別名・GHS）を解決する。
@@ -418,6 +443,93 @@ async function resolveCompoundByCid(cid, { light = false } = {}) {
   return buildResult(parsedCid, "formula", { light });
 }
 
+// ---------- 検索結果のキャッシュ（storage.session。履歴に紐づく） ----------
+// ・履歴に残っている検索（クエリ＋検索モード）の結果だけを保存し、履歴から外れたら消す
+// ・storage.session はメモリ上のみで、ブラウザを閉じる・再起動すると自動的に消える（ディスクには残らない）
+// ・プライベートウィンドウでは書き込まない（履歴と同じ扱い）。設定でOFFにすると使わない
+// ・読み出し時は、画像URLなど外部に使う値を保存データから使わず、CIDから作り直す
+
+function cacheKey(query, smilesMode) {
+  return `${smilesMode ? "smiles" : "name"}:${normalizeQuery(query)}`;
+}
+
+async function readCache() {
+  try {
+    const stored = await browser.storage.session.get(CACHE_KEY);
+    const v = stored[CACHE_KEY];
+    return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  } catch {
+    return {};
+  }
+}
+
+async function writeCache(cache) {
+  try {
+    if (Object.keys(cache).length === 0) await browser.storage.session.remove(CACHE_KEY);
+    else await browser.storage.session.set({ [CACHE_KEY]: cache });
+  } catch (err) {
+    console.warn("Chem Viewer: could not update the result cache:", err?.message || err);
+  }
+}
+
+// 履歴（新しい順）の先頭 CACHE_MAX_ENTRIES 件に対応するキーだけを残したキャッシュを返す
+function filterCacheByHistory(cache, history) {
+  const keep = new Set();
+  for (const h of history) {
+    keep.add(cacheKey(h.query, h.smilesMode));
+    if (keep.size >= CACHE_MAX_ENTRIES) break;
+  }
+  const next = {};
+  let changed = false;
+  for (const k of Object.keys(cache)) {
+    if (keep.has(k)) next[k] = cache[k];
+    else changed = true;
+  }
+  return { next, changed };
+}
+
+async function pruneCacheToHistory(history) {
+  const { next, changed } = filterCacheByHistory(await readCache(), history);
+  if (changed) await writeCache(next);
+}
+
+async function getCachedResult(query, smilesMode) {
+  const settings = await getSettings();
+  if (!settings.cacheEnabled) return null;
+  const entry = (await readCache())[cacheKey(query, smilesMode)];
+  if (!entry || typeof entry !== "object" || !Number.isFinite(entry.ts) || Date.now() - entry.ts > CACHE_TTL_MS) return null;
+  const d = entry.data;
+  if (!d || typeof d !== "object" || !Number.isSafeInteger(d.cid) || d.cid <= 0 || !d.props || typeof d.props !== "object") return null;
+  return { ...d, imageUrl: get2DImageUrl(d.cid) };
+}
+
+async function setCachedResult(query, smilesMode, data) {
+  if (isPrivateContext()) return;
+  const settings = await getSettings();
+  if (!settings.cacheEnabled) return;
+  const history = await getHistory();
+  const key = cacheKey(query, smilesMode);
+  if (!history.some((h) => cacheKey(h.query, h.smilesMode) === key)) return; // 履歴に無い検索は保存しない
+  let size;
+  try {
+    size = JSON.stringify(data).length;
+  } catch {
+    return;
+  }
+  if (size > CACHE_MAX_ENTRY_CHARS) return;
+  const cache = await readCache();
+  cache[key] = { ts: Date.now(), data };
+  await writeCache(filterCacheByHistory(cache, history).next);
+}
+
+async function clearCache() {
+  await writeCache({});
+}
+
+async function getCacheInfo() {
+  return { count: Object.keys(await readCache()).length };
+}
+
 // ---------- 検索履歴（browser.storage.local に保存） ----------
 
 // プライベートブラウジング/シークレットで実行中かどうか。
@@ -442,11 +554,13 @@ async function addHistoryEntry(entry) {
   const sameEntry = (h) => h.query === entry.query && !!h.smilesMode === !!entry.smilesMode;
   const next = [{ ...entry, timestamp: Date.now() }, ...history.filter((h) => !sameEntry(h))].slice(0, settings.historyMax);
   await browser.storage.local.set({ [HISTORY_KEY]: next });
+  await pruneCacheToHistory(next); // 履歴から外れた検索のキャッシュも一緒に消す
   return next;
 }
 
 async function clearHistory() {
   await browser.storage.local.set({ [HISTORY_KEY]: [] });
+  await clearCache(); // キャッシュは履歴に紐づくため、履歴を消したら一緒に消す
 }
 
 async function exportHistoryAsJSON() {
@@ -468,4 +582,8 @@ globalThis.ChemAPI = {
   getSettings,
   saveSettings,
   isPrivateContext,
+  getCachedResult,
+  setCachedResult,
+  clearCache,
+  getCacheInfo,
 };

@@ -8,8 +8,9 @@
     "bg": "node bg.mjs",
     "dom": "node dom.mjs",
     "integrity": "node integrity.mjs",
-    "all": "node unit.mjs && node bg.mjs && node integrity.mjs && node dom.mjs",
-    "check": "node verify.mjs"
+    "all": "node unit.mjs && node bg.mjs && node integrity.mjs && node app.mjs && node dom.mjs",
+    "check": "node verify.mjs",
+    "app": "node app.mjs"
   },
   "devDependencies": {
     "jsdom": "^31.0.0",

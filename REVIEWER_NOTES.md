@@ -45,3 +45,14 @@ formula, then follows the same path as the context-menu/keyboard-shortcut flow (
 popup). It does not change visible page text (it wraps matches in a `<span>`); links, buttons, code and editable fields are
 skipped. Deuterium/tritium (D/T) notation is intentionally excluded from automatic page scanning (but allowed in the manual
 search box) because it caused false positives on common acronyms (HTTP2, COVID19, UTF8); see `formula.js` comments.
+
+## Result cache (storage.session, optional, on by default)
+Results of searches that are still in the user's history are kept in `storage.session` (memory only; cleared by the browser on
+close/restart, never written to disk) for at most 6 hours, at most 50 entries, and not at all in private windows. Entries are
+removed when they drop out of the history, when the history is cleared, or from the settings page; turning the option off
+clears it at once. Nothing from the cache is sent anywhere. Image URLs are rebuilt from the CID on read, not taken from storage.
+
+## Compound names and reaction check
+- The display name now uses PubChem's `Title` property (requested in the same property call as before); isomer candidates'
+  names come from one extra `.../compound/cid/<cids>/property/Title/JSON` request to the same host. No new destination.
+- The reaction balance check (`formula.js`, `balanceReaction`) is a pure local computation; it sends nothing.

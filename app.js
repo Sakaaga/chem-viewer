@@ -6,6 +6,11 @@ const els = {
   result: document.getElementById("result"),
   rQuery: document.getElementById("r-query"),
   rName: document.getElementById("r-name"),
+  rIupacRow: document.getElementById("r-iupac-row"),
+  rIupac: document.getElementById("r-iupac"),
+  reactionResult: document.getElementById("reaction-result"),
+  reactionVerdict: document.getElementById("reaction-verdict"),
+  reactionRows: document.getElementById("reaction-rows"),
   rFormula: document.getElementById("r-formula"),
   rWeight: document.getElementById("r-weight"),
   rSmiles: document.getElementById("r-smiles"),
@@ -25,10 +30,16 @@ const els = {
   rHDonor: document.getElementById("r-hdonor"),
   rHAcceptor: document.getElementById("r-hacceptor"),
   viewToggle: document.getElementById("view-toggle"),
+  viewer3dControls: document.getElementById("viewer-3d-controls"),
+  styleSelect: document.getElementById("style-select"),
+  spinToggle: document.getElementById("spin-toggle"),
+  labelToggle: document.getElementById("label-toggle"),
+  savePng: document.getElementById("save-png"),
+  saveSdf: document.getElementById("save-sdf"),
   viewer: document.getElementById("viewer"),
   viewerImage: document.getElementById("viewer-image"),
   molarMassInput: document.getElementById("molar-mass-input"),
-  molarMolOutput: document.getElementById("molar-mol-output"),
+  molarMolInput: document.getElementById("molar-mol-input"),
   pubchemLink: document.getElementById("pubchem-link"),
   copyResult: document.getElementById("copy-result"),
   historyList: document.getElementById("history-list"),
@@ -47,6 +58,11 @@ let currentImageUrl = null; // 2D画像は表示モードになるまで読み�
 let currentLang = "en"; // 表示言語（英語既定）。設定の resultLanguage から初期化する
 let currentJaName = null; // 直近の結果についての日本語名（取得済みならキャッシュ、未取得ならnull）
 let currentGhs = null; // 翻訳トグルでHコードの表示を切り替えるために保持
+let currentSdf = null; // 「SDF保存」用に、表示中の構造データを保持
+let currentCandidates = null; // 分子式検索の異性体候補 { all: [CID...], titles: { "CID": "名前" } }
+let currentStyle = "ballstick"; // 3D表示スタイル（設定 viewerStyle で初期化し、変更時に保存する）
+let spinOn = false;
+let labelsOn = false;
 
 // プライベートウィンドウでは「履歴は保存されません」の案内を表示する
 if (els.privateNote && ChemAPI.isPrivateContext()) {
@@ -56,7 +72,10 @@ if (els.privateNote && ChemAPI.isPrivateContext()) {
 // 設定の表示言語を初期値として反映（以後はこのポップアップ内でのトグルで切り替える）
 ChemAPI.getSettings().then((settings) => {
   currentLang = settings.resultLanguage;
+  currentStyle = settings.viewerStyle;
+  els.styleSelect.value = currentStyle;
   updateLangToggleLabel();
+  applyViewerStyle();
 });
 
 function updateLangToggleLabel() {
@@ -76,20 +95,98 @@ function setBusy(busy) {
   els.searchBtn.textContent = busy ? t("searchButtonBusy") : t("searchButton");
 }
 
+// 3D表示スタイル。ballstick は従来どおりの見た目
+const STYLE_SPECS = {
+  ballstick: { stick: {}, sphere: { scale: 0.3 } },
+  stick: { stick: {} },
+  sphere: { sphere: {} },
+  line: { line: {} },
+};
+
+function applyViewerStyle(render = true) {
+  if (!glviewer) return;
+  glviewer.setStyle({}, STYLE_SPECS[currentStyle] || STYLE_SPECS.ballstick);
+  glviewer.removeAllLabels();
+  if (labelsOn) {
+    glviewer.addPropertyLabels("elem", {}, { fontSize: 12, fontColor: "black", showBackground: false, alignment: "center" });
+  }
+  if (render) glviewer.render();
+}
+
 function renderViewer(sdfText) {
+  // 古いビューアの自動回転タイマーを止める（止めないと、表示を差し替えた後も裏で回り続ける）
+  if (glviewer) {
+    try {
+      glviewer.spin(false);
+    } catch {
+      /* 破棄済みのビューアなら何もしない */
+    }
+  }
   els.viewer.innerHTML = "";
   glviewer = $3Dmol.createViewer(els.viewer, { backgroundColor: "white" });
   glviewer.addModel(sdfText, "sdf");
-  glviewer.setStyle({}, { stick: {}, sphere: { scale: 0.3 } });
+  applyViewerStyle(false);
   glviewer.zoomTo();
   glviewer.render();
+  if (spinOn) glviewer.spin(true);
 }
+
+function setPressed(button, on) {
+  button.setAttribute("aria-pressed", String(on));
+  button.classList.toggle("active", on);
+}
+
+function dataUrlToBlob(dataUrl) {
+  const [head, body] = String(dataUrl).split(",");
+  const mime = /^data:([^;]+)/.exec(head)?.[1] || "image/png";
+  const bin = atob(body || "");
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new Blob([bytes], { type: mime });
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+els.styleSelect.addEventListener("change", () => {
+  currentStyle = els.styleSelect.value;
+  applyViewerStyle();
+  ChemAPI.saveSettings({ viewerStyle: currentStyle }).catch(() => {});
+});
+els.spinToggle.addEventListener("click", () => {
+  spinOn = !spinOn;
+  setPressed(els.spinToggle, spinOn);
+  if (glviewer) glviewer.spin(spinOn);
+});
+els.labelToggle.addEventListener("click", () => {
+  labelsOn = !labelsOn;
+  setPressed(els.labelToggle, labelsOn);
+  applyViewerStyle();
+});
+els.savePng.addEventListener("click", () => {
+  if (!glviewer || !lastResult) return;
+  glviewer.render(); // 描画直後でないと空の画像になることがあるため、保存の直前に描き直す
+  downloadBlob(dataUrlToBlob(glviewer.pngURI()), `chem-viewer-${lastResult.cid}.png`);
+});
+els.saveSdf.addEventListener("click", () => {
+  if (!currentSdf || !lastResult) return;
+  downloadBlob(new Blob([currentSdf], { type: "text/plain" }), `chem-viewer-${lastResult.cid}.sdf`);
+});
 
 // 2D画像 / 3Dモデルの表示切り替え
 function setViewMode(mode) {
   viewMode = mode;
   if (mode === "image") {
     els.viewer.style.display = "none";
+    els.viewer3dControls.style.display = "none";
     els.viewerImage.style.display = "block";
     if (currentImageUrl && els.viewerImage.getAttribute("src") !== currentImageUrl) {
       els.viewerImage.src = currentImageUrl;
@@ -97,6 +194,7 @@ function setViewMode(mode) {
     els.viewToggle.textContent = t("viewToggleTo3D");
   } else {
     els.viewer.style.display = "block";
+    els.viewer3dControls.style.display = "";
     els.viewerImage.style.display = "none";
     els.viewToggle.textContent = t("viewToggleTo2D");
   }
@@ -191,18 +289,19 @@ function renderAdvancedProps(props) {
 }
 
 // 分子式検索で異性体が複数見つかった場合の候補ドロップダウン
-function renderCandidates(cid, otherCids) {
-  if (!otherCids || otherCids.length === 0) {
+function renderCandidates(cid, candidates) {
+  if (!candidates || candidates.all.length < 2) {
     els.rCandidatesRow.style.display = "none";
     els.candidateSelect.innerHTML = "";
     return;
   }
   els.rCandidatesRow.style.display = "flex";
   els.candidateSelect.innerHTML = "";
-  for (const c of [cid, ...otherCids]) {
+  for (const c of candidates.all) {
     const opt = document.createElement("option");
     opt.value = String(c);
-    opt.textContent = `CID ${c}`;
+    const title = candidates.titles[String(c)];
+    opt.textContent = title ? `${title} (CID ${c})` : `CID ${c}`; // 名前が取れなかった候補はCIDだけ表示
     els.candidateSelect.appendChild(opt);
   }
   els.candidateSelect.value = String(cid);
@@ -215,7 +314,13 @@ els.candidateSelect.addEventListener("change", async () => {
   setStatus(t("statusSearching"));
   try {
     const resolved = await ChemAPI.resolveCompoundByCid(cid);
-    if (resolved) await renderResult(resolved, els.input.value, els.smilesToggle.checked, { skipHistory: true });
+    // 候補の一覧は引き継ぐ（引き継がないと、別の候補を選んだ直後にドロップダウンが消える）
+    if (resolved) {
+      await renderResult(resolved, lastResult ? lastResult.query : els.input.value, els.smilesToggle.checked, {
+        skipHistory: true,
+        candidates: currentCandidates,
+      });
+    }
   } catch (err) {
     console.error(err);
     setStatus(t("statusError"));
@@ -249,14 +354,20 @@ if (els.langToggle) {
 }
 
 // CIDが決まった後の表示処理。候補切り替え（renderCandidates経由の再検索）とも共有する。
-async function renderResult(resolved, query, smilesMode, { skipHistory = false } = {}) {
+async function renderResult(resolved, query, smilesMode, { skipHistory = false, fromCache = false, candidates = null } = {}) {
   const { cid, props, sdf, synonyms, casNumber, ghs, imageUrl, matchedBy, jaName, otherCids } = resolved;
 
+  els.reactionResult.style.display = "none";
   currentJaName = matchedBy === "ja-name" ? jaName : null;
-  const nameEn = props.IUPACName || "(不明)";
+  // 表示名は一般名（Title。例: Water）。IUPAC名（例: oxidane）は別の行に出す
+  const iupac = props.IUPACName || "";
+  const nameEn = props.Title || iupac || t("unknownName");
 
   els.rQuery.textContent = query;
   els.rName.textContent = currentLang === "ja" && currentJaName ? currentJaName : nameEn;
+  const showIupac = iupac && iupac.toLowerCase() !== nameEn.toLowerCase();
+  els.rIupacRow.style.display = showIupac ? "flex" : "none";
+  els.rIupac.textContent = showIupac ? iupac : "";
   els.rFormula.textContent = props.MolecularFormula || "-";
   els.rWeight.textContent = props.MolecularWeight ? t("weightWithUnit", [props.MolecularWeight]) : "-";
   els.rSmiles.textContent = props.smiles || "-";
@@ -267,7 +378,12 @@ async function renderResult(resolved, query, smilesMode, { skipHistory = false }
   renderSynonyms(synonyms);
   renderHazard(ghs);
   renderAdvancedProps(props);
-  renderCandidates(cid, otherCids);
+  currentCandidates =
+    candidates || {
+      all: otherCids && otherCids.length > 0 ? [cid, ...otherCids] : [],
+      titles: resolved.candidateTitles && typeof resolved.candidateTitles === "object" ? resolved.candidateTitles : {},
+    };
+  renderCandidates(cid, currentCandidates);
 
   els.result.style.display = "block";
   currentImageUrl = imageUrl;
@@ -275,10 +391,14 @@ async function renderResult(resolved, query, smilesMode, { skipHistory = false }
   els.viewerImage.alt = nameEn || props.MolecularFormula || query;
 
   els.molarMassInput.value = "";
-  els.molarMolOutput.textContent = "-";
+  els.molarMolInput.value = "";
 
-  // 分子式での一致は「同じ分子式の異性体のうち先頭1件」なので、その旨を明示する
-  const note = matchedBy === "formula" ? t("statusFormulaMatch") : "";
+  // 分子式での一致は「同じ分子式の異性体のうち先頭1件」なので、その旨を明示する。
+  // キャッシュから出した場合も、最新の情報ではない可能性があるので明示する
+  const note = [matchedBy === "formula" ? t("statusFormulaMatch") : "", fromCache ? t("statusFromCache") : ""]
+    .filter(Boolean)
+    .join(" ");
+  currentSdf = sdf || null;
 
   if (sdf) {
     renderViewer(sdf);
@@ -298,8 +418,10 @@ async function renderResult(resolved, query, smilesMode, { skipHistory = false }
     matchedBy,
     query,
     nameEn,
+    iupac: showIupac ? iupac : "",
     formula: props.MolecularFormula || "-",
     weight: props.MolecularWeight ? t("weightWithUnit", [props.MolecularWeight]) : "-",
+    weightValue: Number(props.MolecularWeight) > 0 ? Number(props.MolecularWeight) : null,
     smiles: props.smiles || "-",
     inchikey: props.InChIKey || "-",
     casNumber: casNumber || "-",
@@ -313,8 +435,37 @@ async function renderResult(resolved, query, smilesMode, { skipHistory = false }
       name: nameEn,
       formula: props.MolecularFormula || null,
     });
+    // 履歴に紐づけてキャッシュする（履歴の保存先と同じ条件: プライベートウィンドウでは保存しない。設定でOFFなら保存しない）
+    if (!fromCache) await ChemAPI.setCachedResult(query, smilesMode, resolved).catch(() => {});
     await renderHistory();
   }
+}
+
+// 反応式（例: 2H2 + O2 -> 2H2O）の原子数収支。端末内だけで計算し、通信しない。
+function renderReaction(rx) {
+  els.result.style.display = "none";
+  lastResult = null;
+  els.reactionRows.innerHTML = "";
+  els.reactionVerdict.textContent = rx.balanced ? t("reactionBalanced") : t("reactionUnbalanced");
+  els.reactionVerdict.className = rx.balanced ? "reaction-ok" : "reaction-ng";
+
+  const addRow = (cells, extraClass) => {
+    const row = document.createElement("div");
+    row.className = `reaction-row ${extraClass || ""}`.trim();
+    for (const text of cells) {
+      const span = document.createElement("span");
+      span.textContent = text;
+      row.appendChild(span);
+    }
+    els.reactionRows.appendChild(row);
+  };
+  addRow([t("reactionElementHeader"), t("reactionLeftHeader"), t("reactionRightHeader"), ""], "reaction-head");
+  for (const e of rx.elements) {
+    const ok = e.left === e.right;
+    addRow([e.symbol, String(e.left), String(e.right), ok ? "\u2713" : "\u2717"], ok ? "" : "reaction-mismatch");
+  }
+  els.reactionResult.style.display = "block";
+  setStatus("");
 }
 
 async function runQuery(rawQuery) {
@@ -331,13 +482,30 @@ async function runQuery(rawQuery) {
     return;
   }
 
+  const smilesMode = els.smilesToggle.checked;
+
+  // 反応式として読める入力は、通信せずに原子数を数える（SMILES検索では対象外）
+  if (!smilesMode) {
+    const reaction = ChemFormula.balanceReaction(query);
+    if (reaction) {
+      renderReaction(reaction);
+      return;
+    }
+  }
+  els.reactionResult.style.display = "none";
+
   els.result.style.display = "none";
   setBusy(true);
   setStatus(t("statusSearching"));
 
-  const smilesMode = els.smilesToggle.checked;
-
   try {
+    // 履歴に残っている検索なら、保存済みの結果を使う（通信しない）
+    const cached = await ChemAPI.getCachedResult(query, smilesMode).catch(() => null);
+    if (cached) {
+      await renderResult(cached, query, smilesMode, { fromCache: true });
+      return;
+    }
+
     const resolved = await ChemAPI.resolveCompound(query, { smilesMode });
 
     if (!resolved) {
@@ -364,16 +532,23 @@ async function runQuery(rawQuery) {
   }
 }
 
-// モル計算（質量 g → 物質量 mol）。分子量が分かっている結果にのみ対応。
-els.molarMassInput.addEventListener("input", () => {
-  const grams = parseFloat(els.molarMassInput.value);
-  const weight = lastResult && Number(lastResult.weight.replace(/[^\d.]/g, ""));
-  if (!Number.isFinite(grams) || !weight) {
-    els.molarMolOutput.textContent = "-";
+// モル計算（質量 g ⇄ 物質量 mol）。分子量が分かっている結果にのみ対応。どちらを入力しても、もう一方に反映する。
+function formatAmount(x) {
+  return String(Number(x.toPrecision(4)));
+}
+
+function convertAmount(from, to, toGrams) {
+  const value = parseFloat(from.value);
+  const weight = lastResult && lastResult.weightValue;
+  if (!Number.isFinite(value) || !(weight > 0)) {
+    to.value = "";
     return;
   }
-  els.molarMolOutput.textContent = (grams / weight).toPrecision(4);
-});
+  to.value = formatAmount(toGrams ? value * weight : value / weight);
+}
+
+els.molarMassInput.addEventListener("input", () => convertAmount(els.molarMassInput, els.molarMolInput, false));
+els.molarMolInput.addEventListener("input", () => convertAmount(els.molarMolInput, els.molarMassInput, true));
 
 // 結果をテキストとしてクリップボードにコピー
 async function copyResultToClipboard() {
@@ -381,6 +556,7 @@ async function copyResultToClipboard() {
   const text = [
     `${t("clipboardLabelQuery")}: ${lastResult.query}`,
     `${t("clipboardLabelName")}: ${lastResult.nameEn}`,
+    ...(lastResult.iupac ? [`${t("clipboardLabelIupac")}: ${lastResult.iupac}`] : []),
     `${t("clipboardLabelFormula")}: ${lastResult.formula}`,
     `${t("clipboardLabelWeight")}: ${lastResult.weight}`,
     `${t("clipboardLabelSmiles")}: ${lastResult.smiles}`,
@@ -404,15 +580,7 @@ async function copyResultToClipboard() {
 // 履歴をJSONファイルとしてダウンロード
 async function exportHistory() {
   const json = await ChemAPI.exportHistoryAsJSON();
-  const blob = new Blob([json], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `chem-viewer-history-${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  downloadBlob(new Blob([json], { type: "application/json" }), `chem-viewer-history-${new Date().toISOString().slice(0, 10)}.json`);
 }
 
 els.searchBtn.addEventListener("click", () => runQuery(els.input.value));

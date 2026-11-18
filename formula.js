@@ -255,5 +255,48 @@
     return parse(normalizeSubscripts(text), { allowIsotopes: true }).valid;
   }
 
-  global.ChemFormula = { parse, findFormulas, isFormula, normalizeSubscripts, normalizeFormula, toSearchFormula, toHillFormula };
+  // ---------- 反応式の原子数収支チェック（端末内だけで計算し、通信しない） ----------
+  // 例: "2H2 + O2 -> 2H2O"。矢印は -> => --> <-> <=> → ⇒ ⇌ ⇄ ↔ など。"=" は「+」を含む場合だけ矢印とみなす
+  // （SMILESの "C=C" を反応式と誤認しないため）。係数・括弧・水和物は parse() の展開結果（counts）をそのまま使う。
+  // 各項は「+」で区切るため、イオンの電荷（Na+, Fe3+）には対応しない（空の項になり、反応式として扱わない）。
+  const ARROW_RE = /<?[-=]{1,3}>|[\u2192\u27F6\u21D2\u21CC\u21C4\u2194\u27F7]/;
+
+  function sumSide(sideText) {
+    const total = new Map();
+    for (const raw of sideText.split("+")) {
+      const term = raw.trim();
+      if (!term) return null;
+      const r = parse(term, { allowIsotopes: true });
+      if (!r.valid) return null;
+      for (const [sym, c] of r.counts) total.set(sym, (total.get(sym) || 0) + c);
+    }
+    return total.size > 0 ? total : null;
+  }
+
+  // 反応式として解釈できなければ null（通常の検索として扱う）。
+  // 戻り値: { balanced, elements: [{ symbol, left, right }] }（C, H, 他はアルファベット順）
+  function balanceReaction(text) {
+    const s = normalizeSubscripts(String(text)).trim();
+    if (!s || s.length > 200) return null;
+    let sides;
+    const m = ARROW_RE.exec(s);
+    if (m) {
+      const right = s.slice(m.index + m[0].length);
+      if (ARROW_RE.test(right)) return null; // 矢印が複数ある式は対象外
+      sides = [s.slice(0, m.index), right];
+    } else if (s.includes("+") && s.split("=").length === 2) {
+      sides = s.split("=");
+    } else {
+      return null;
+    }
+    const left = sumSide(sides[0]);
+    const right = sumSide(sides[1]);
+    if (!left || !right) return null;
+    const rank = (sym) => (sym === "C" ? 0 : sym === "H" ? 1 : 2);
+    const symbols = [...new Set([...left.keys(), ...right.keys()])].sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+    const elements = symbols.map((symbol) => ({ symbol, left: left.get(symbol) || 0, right: right.get(symbol) || 0 }));
+    return { balanced: elements.every((e) => e.left === e.right), elements };
+  }
+
+  global.ChemFormula = { balanceReaction, parse, findFormulas, isFormula, normalizeSubscripts, normalizeFormula, toSearchFormula, toHillFormula };
 })(typeof window !== "undefined" ? window : globalThis);
