@@ -25,6 +25,14 @@ node build.mjs
 - **Firefox**（140以上）: `about:debugging#/runtime/this-firefox` →「一時的なアドオンを読み込む…」→ `dist/firefox/manifest.json`
 - **Chrome**（116以上）: `chrome://extensions` → デベロッパーモードON →「パッケージ化されていない拡張機能を読み込む」→ `dist/chrome`
 
+### 最新版のダウンロード
+[Releases](https://github.com/Sakaaga/chem-viewer/releases/latest) から、お使いのブラウザ用のzipを取得できます。
+固定URL（常に最新の安定版）:
+- Firefox: `https://github.com/Sakaaga/chem-viewer/releases/latest/download/chem-extension-firefox.zip`
+- Chrome: `https://github.com/Sakaaga/chem-viewer/releases/latest/download/chem-extension-chrome.zip`
+
+`v0.4.0-beta.1` のようにハイフンを含むタグはプレリリースとなり、上記の「最新版」には含まれません。
+
 ## 主な機能
 
 - テキスト選択→右クリック、またはショートカット（既定 `Ctrl+Shift+8` / Mac `Command+Shift+8`）で解析
