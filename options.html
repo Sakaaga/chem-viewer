@@ -54,6 +54,8 @@
     padding: 1px 4px;
     border-radius: 4px;
   }
+  .warn-box { margin-top: 6px; }
+  .cache-row { display: flex; align-items: center; gap: 10px; }
   #save-status {
     font-size: 12px;
     color: #16a34a;
@@ -89,9 +91,22 @@
 
     <div class="field">
       <label class="field-checkbox">
+        <input type="checkbox" id="cache-enabled-input">
+        <span data-i18n="cacheLabel"></span>
+      </label>
+      <div class="field-hint" data-i18n="cacheHint"></div>
+      <div class="field-hint cache-row">
+        <span id="cache-count"></span>
+        <button id="cache-clear-btn" type="button" data-i18n="cacheClearButton"></button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-checkbox">
         <input type="checkbox" id="auto-highlight-input">
         <span data-i18n="autoHighlightLabel"></span>
       </label>
+      <div class="warn-box" role="note" data-i18n="autoHighlightBetaWarning"></div>
       <div class="field-hint">
         <span data-i18n="autoHighlightHint1"></span><strong data-i18n="autoHighlightHint2"></strong><span data-i18n="autoHighlightHint3"></span>
         <br><span data-i18n="autoHighlightPermissionNote"></span>

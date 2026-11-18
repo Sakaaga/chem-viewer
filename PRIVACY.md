@@ -17,6 +17,8 @@
 - 検索履歴（最大件数は設定で変更可、既定20件）と設定値：ブラウザのローカルストレージ（`storage.local`）にのみ保存され、外部へ送信されません
 - プライベートウィンドウ/シークレットモードでは検索履歴を保存しません
 - 右クリック/ショートカットで渡された選択テキストは、メモリ上の一時領域（`storage.session`）に1分以内だけ保持されます
+- 検索結果のキャッシュ（設定でON/OFF可、既定ON）：検索履歴に残っている検索の結果だけを、メモリ上（`storage.session`）に最長6時間保持します。ブラウザを閉じる・再起動すると自動的に削除され、ディスクには保存されません。プライベートウィンドウでは使いません。履歴を消去すると一緒に削除され、設定画面からいつでも削除できます
+- 反応式（`2H2 + O2 -> 2H2O`）の原子数の確認は端末内だけで計算し、何も送信しません
 
 ### データの削除
 ポップアップの「消去」ボタンで履歴を削除できます。拡張機能を削除すると、保存データもすべて削除されます。
@@ -43,6 +45,8 @@ The URL, title or content of the pages you browse, your browsing history, person
 - Search history (up to a configurable limit, default 20) and settings are stored only in the browser's local storage and are never transmitted
 - Search history is not saved in private/incognito windows
 - Selected text passed via the context menu / shortcut is kept in memory (`storage.session`) for at most one minute
+- Search-result cache (can be turned off in Settings; on by default): results of searches that are still in your history are kept in memory (`storage.session`) for up to 6 hours. It is deleted automatically when the browser is closed or restarted, is never written to disk, and is not used in private windows. Clearing the history clears it too, and you can delete it any time from Settings
+- Reaction checks (e.g. `2H2 + O2 -> 2H2O`) are computed on your device and nothing is sent
 
 ### Deleting data
 Use the "Clear" button to delete history. Uninstalling the extension removes all stored data.

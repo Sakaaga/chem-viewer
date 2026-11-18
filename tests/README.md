@@ -13,6 +13,7 @@ npm run all
 | `npm run unit` | 通信層・化学式判定・履歴・日本語名検索/GHS和訳（偽のfetchで検証） | 数秒 |
 | `npm run bg` | background.js の問い合わせ受付・更新時の再登録 | 数秒 |
 | `npm run integrity` | `libs/` の同梱ライブラリが、`THIRD_PARTY_NOTICES.md` のSHA-256と一致するか | 1秒未満 |
+| `npm run app` | popup.html + app.js を jsdom 上で実行（反応式・一般名・モル計算・3D操作・キャッシュ・異性体候補。3Dmol.jsは記録用の偽物） | 数秒 |
 | `npm run dom` | content.js を jsdom 上で実行（大きなページ・動的ページ・ファジング） | 約1分 |
 | `npm run all` | 上記をすべて実行（CIが実行するのはこれ） | 約1分 |
 | `npm run check` | 実ブラウザ(Chromium)で検索フローを確認。要 `node build.mjs` と `npx playwright install chromium`、PubChemへの実通信あり。CIでは実行しない | — |

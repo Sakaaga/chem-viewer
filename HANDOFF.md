@@ -63,8 +63,19 @@ npm run check                     # 実Chromiumでの確認（要 playwright ins
 - manifest（Firefox/Chrome）と `package.json` の version を 0.3.1 に更新。3-1（SMILES）・3-2b（GHS・日本語名）の修正を含む。AMOへの提出は未了（ユーザーが実施）。タグ `v0.3.1` は未作成（pushするとReleaseにzipが自動添付される）
 - 実機確認（Firefox・公開版または手元のビルド）で、A-1（SMILES欄が空）とA-4（硫酸でもGHSが出ない）が不具合として報告された。いずれも `main` で修正済み。どの版を動かしていたかは未確認
 
+### 3-2d. 一般名・反応式・モル双方向・3D操作・キャッシュ（2026-11-18、ブランチ `feat/title-reaction-cache-viewer`）
+ユーザー依頼で実装。**未マージ・未リリース**（version は 0.3.1 のまま。リリース時に上げる）。
+- 表示名は PubChem の `Title`（一般名）。IUPAC名は別行（同じなら出さない）。異性体候補は `fetchTitles()` で1回にまとめて名前を取得（失敗しても検索は成立）。候補を選び直してもドロップダウンが消えない不具合も同時に修正
+- 反応式の原子数チェック: `ChemFormula.balanceReaction()`。端末内のみ・通信なし・履歴にも入れない。`=` は `+` を含むときだけ矢印扱い（SMILESの `C=C` 対策）。イオンの電荷は非対応（項が空になり通常検索へ）
+- モル計算は g ⇄ mol の双方向（`weightValue` を数値で保持。以前は表示文字列から数値を取り出していた）
+- 3D: 表示スタイル（`viewerStyle` 設定に保存）・自動回転・元素ラベル・PNG/SDF保存。**表示を差し替える前に古いビューアの `spin(false)` が必要**（しないと裏で回り続ける）
+- キャッシュ（`pubchem.js` の `getCachedResult` / `setCachedResult` / `clearCache` / `getCacheInfo`）: `storage.session`（メモリのみ・ブラウザ終了/再起動で消える）。**履歴に紐づく**（履歴にある検索だけ保存、履歴から外れる/履歴消去で一緒に消える）、最長6時間、最大50件、1件400,000文字まで、プライベートウィンドウでは保存しない。読み出し時は `imageUrl` を保存値でなくCIDから作り直す。設定画面で ON/OFF・件数表示・削除（OFFにすると即削除）
+- ページ内ハイライトは**ベータ版**表記（設定画面の警告・ラベル・README・ストア掲載文）
+- テスト: `tests/app.mjs`（popup.html+app.js のjsdom統合テスト。13件）を追加し `npm run all` に組み込み。単体テストも追加。**変異テスト**（実装を壊してテストが落ちることの確認）を実施済み
+
 ### 3-3. 未検証（実機・実サーバーで一度も確認していない）
 手順と期待値は `docs/manual-test-checklist.md`。結果はそこに記入してから、この項を更新する。
+- **3-2d の新機能はすべて、jsdomと偽fetchでのみ確認**。実機で特に見る点: `Title` の実応答、候補名のまとめ取得（`/cid/100,200,300/property/Title/JSON`）、`storage.session` がブラウザ再起動で本当に空になるか、ポップアップ内でのPNG/SDFダウンロード（Firefox/Chrome）、3Dのスタイル・ラベル・回転の見た目、ポップアップの幅（380px）で操作ボタンが崩れないか（`docs/manual-test-checklist.md` の I 節）
 - 実際のFirefox/Chromeでの動作全般（これまでの検証はjsdomと偽fetchのみ）。特に: ハイライトをクリックしたときのポップアップ自動表示（`action.openPopup()`）、全サイト権限の許可フロー、Chromeのサイドパネル、Wikipedia等の実ページでのハイライト
 - **Wikidata APIの実通信**（`wbsearchentities` / `wbgetentities` / `list=search` の `haswbstatement:P662=`、CORSの `origin=*`）。仕様は公式ドキュメントに基づくが、実応答は未確認
 - PubChemの **GHS（PUG View）パーサ**が、実応答の構造を正しく読めているか
@@ -80,7 +91,7 @@ npm run check                     # 実Chromiumでの確認（要 playwright ins
 
 ### 3-5. 既知の制限・検討中の案
 - 既知の制限は `README.md` の「既知の制限」を参照（PDFビューア内は非対応、`B52`/`F16`/`N95` のような「単一元素＋数字」は誤検出が残る、iframe内は対象外 など）
-- 検討したが未着手の機能案: サイト別のハイライトON/OFF、3Dビューアのスタイル切替・SDF保存、ローカルキャッシュ、お気に入り／比較、ポップアップを開けない場合のページ内カード表示
+- 検討したが未着手の機能案: サイト別のハイライトON/OFF、お気に入り／比較、ポップアップを開けない場合のページ内カード表示、オフラインの分子量計算（`counts` と原子量表で可能）、融点・沸点などの物性（PUG View。GHSと同様に参考表示の扱い）、Microsoft Edgeアドオンストアへの提出（Chrome版がほぼそのまま使える）
 
 ## 4. 構成と設計
 ```
@@ -113,6 +124,9 @@ scripts/check-amo-lint.mjs … addons-linterの結果判定（許可する警告
 - ファジングテストは60件が上限（jsdomウィンドウを閉じないとテスト環境が重くなる）
 - `LICENSE` は**標準のMIT原文のみ**にする（注記を足すとGitHubがライセンスを判定できない）。同梱ライブラリのライセンスは THIRD_PARTY_NOTICES.md に書く
 - NFKC正規化は `H₂O` を `H2O` に変換する（`normalizeQuery` の挙動）
+- **キャッシュは履歴に紐づける**。履歴に無い検索を保存しない／履歴から外れたら消す。`addHistoryEntry` と `clearHistory` の中で整理している（呼び忘れ防止のため）
+- キャッシュから `imageUrl` などURLになる値を直接使わない（`getCachedResult` がCIDから作り直す）。表示は `textContent` のみ
+- テストで、ユーザー操作の直後に**テスト自身が設定した値**を確認しない（再描画の完了を待つ）。`tests/app.mjs` の候補のテストで、待たずに通ってしまう欠陥があり、変異テストで発見・修正した
 
 ## 6. ユーザーが決めたこと
 - リポジトリは**公開**、ライセンスは**MIT**、テストは `tests/` フォルダに置く
@@ -120,3 +134,5 @@ scripts/check-amo-lint.mjs … addons-linterの結果判定（許可する警告
 - 新規GitHubリポジトリには、コードスキャナ（CodeQL等）を入れる
 - Cloudflare無料プラン（Workers・KV・D1・Pages）は許可なく使ってよいが、他のサービスは事前に確認する。設定はコードではなくWebダッシュボードで行う（この拡張機能では未使用）
 - 返信・ドキュメントは日本語
+- キャッシュは**履歴に紐づけ**、**ブラウザを閉じる/再起動で削除**（ディスクに残さない）。設定画面でON/OFF・削除できること（2026-11-18）
+- ページ内ハイライトは**ベータ版・動作が不安定**である旨の警告を付ける（2026-11-18）

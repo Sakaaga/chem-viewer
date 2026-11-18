@@ -14,14 +14,16 @@ Webページ上で選択した化学式（H2O、C6H12O6、CuSO4·5H2O など）�
 - 分子式・分子量・SMILES・InChIKey・CAS登録番号・別名の表示
 - 3D構造と2D構造画像の切り替え
 - 危険有害性情報（GHS）の表示と日本語訳
-- 英語⇄日本語の表示切り替え、モル計算、検索履歴
-- （任意・初期設定はオフ）ページ内の化学式をうっすらハイライトし、クリックで検索
+- 英語⇄日本語の表示切り替え、モル計算（質量⇄物質量）、検索履歴
+- 反応式（2H2 + O2 -> 2H2O）の原子数チェック（端末内で計算）
+- 3D表示のスタイル切り替え・自動回転・元素ラベル・PNG／SDF保存
+- （任意・初期設定はオフ・ベータ版）ページ内の化学式をうっすらハイライトし、クリックで検索。動作が不安定な場合があります
 
 データの送信について
 - 入力または選択して実行した文字列（最大200文字）をPubChem（米国国立生物工学情報センター）に送信します。見つからない場合は日本語名の検索のためWikidataにも送信します。
 - ハイライト機能をオンにした場合のみ、クリックした化学式をPubChemに送信します（ホバーだけでは送信しません）。
 - Cookieは送信しません。開発者のサーバーはなく、広告・解析・トラッキングは含みません。
-- 検索履歴は端末内にのみ保存され、プライベートウィンドウでは保存しません。
+- 検索履歴は端末内にのみ保存され、プライベートウィンドウでは保存しません。検索結果のキャッシュはメモリ上のみで、ブラウザを閉じると削除されます（設定でオフにできます）。
 
 ご注意
 - 危険有害性情報（GHS）はPubChemが集約した情報の参考表示であり、公式の安全データシート（SDS）の代替ではありません。取り扱いの際は必ず一次情報をご確認ください。日本語訳は厚生労働省の仮訳に基づく簡易辞書です。
@@ -35,14 +37,16 @@ Features
 - Formula, molecular weight, SMILES, InChIKey, CAS number and synonyms
 - Switch between a 3D model and a 2D structure image
 - GHS hazard statements, with Japanese translation
-- English/Japanese display toggle, molar calculator, search history
-- (Optional, off by default) subtle highlighting of formulas on pages; click one to look it up
+- English/Japanese display toggle, two-way molar calculator, search history
+- Reaction balance check (e.g. 2H2 + O2 -> 2H2O), computed on your device
+- 3D view styles, auto-rotate, element labels, PNG/SDF export
+- (Optional, off by default, beta) subtle highlighting of formulas on pages; click one to look it up. May be unstable
 
 Data sent
 - The text you type, or select and analyze (up to 200 characters), is sent to PubChem (U.S. National Center for Biotechnology Information). If nothing is found, it is also sent to Wikidata as a Japanese-name lookup.
 - Only if you enable page highlighting: the formula you click is sent to PubChem (hovering sends nothing).
 - No cookies are sent. There is no developer server, and no ads, analytics or tracking.
-- Search history stays on your device and is not saved in private windows.
+- Search history stays on your device and is not saved in private windows. The result cache lives only in memory and is deleted when the browser closes (can be turned off in Settings).
 
 Notes
 - Hazard (GHS) information is shown for reference only, as aggregated by PubChem. It is not a substitute for an official Safety Data Sheet (SDS).

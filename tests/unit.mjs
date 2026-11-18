@@ -10,16 +10,20 @@ const src = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 function makeEnv({ fetchImpl, incognito = false, settings } = {}) {
   const store = {};
+  const session = {}; // storage.session（メモリ上のみ）の偽物
   if (settings) store.settings = settings;
   const browser = {
-    storage: { local: { get: async (k) => ({ [k]: store[k] }), set: async (o) => Object.assign(store, o) } },
+    storage: {
+      local: { get: async (k) => ({ [k]: store[k] }), set: async (o) => Object.assign(store, o) },
+      session: { get: async (k) => ({ [k]: session[k] }), set: async (o) => Object.assign(session, o), remove: async (k) => { delete session[k]; } },
+    },
     extension: { inIncognitoContext: incognito },
   };
   const ctx = { browser, fetch: fetchImpl, AbortController, setTimeout, clearTimeout, console, URL };
   ctx.window = ctx;
   vm.createContext(ctx);
   for (const f of ["formula.js", "pubchem.js"]) vm.runInContext(fs.readFileSync(path.join(src, f), "utf8"), ctx, { filename: f });
-  return { ChemAPI: ctx.window.ChemAPI, ChemFormula: ctx.window.ChemFormula, store };
+  return { ChemAPI: ctx.window.ChemAPI, ChemFormula: ctx.window.ChemFormula, store, session };
 }
 
 // vmの別実行空間で作られた配列/オブジェクトは prototype が異なり厳密比較に失敗するため、素のJSONに変換して比較する
@@ -471,8 +475,184 @@ await test("壊れた/改ざんされた保存データは除外・補正され�
   store.searchHistory = [1, null, { query: 5 }, { query: "ok", timestamp: 1 }];
   assert.deepEqual(plain((await ChemAPI.getHistory()).map((h) => h.query)), ["ok"]);
   store.settings = { timeoutSeconds: "abc", historyMax: 99999, preferredStructure: "x", autoHighlight: "yes", resultLanguage: "fr" };
-  assert.deepEqual(plain(await ChemAPI.getSettings()), { timeoutSeconds: 8, historyMax: 200, preferredStructure: "3d", autoHighlight: false, resultLanguage: "en" });
+  assert.deepEqual(plain(await ChemAPI.getSettings()), { timeoutSeconds: 8, historyMax: 200, preferredStructure: "3d", autoHighlight: false, resultLanguage: "en", cacheEnabled: true, viewerStyle: "ballstick" });
+  store.settings = { cacheEnabled: false, viewerStyle: "sphere" };
+  const s2 = await ChemAPI.getSettings();
+  assert.equal(s2.cacheEnabled, false);
+  assert.equal(s2.viewerStyle, "sphere");
+  store.settings = { cacheEnabled: "no", viewerStyle: "<script>" };
+  const s3 = await ChemAPI.getSettings();
+  assert.equal(s3.cacheEnabled, true, "false以外（壊れた値）は既定のONに戻す");
+  assert.equal(s3.viewerStyle, "ballstick");
 });
+
+console.log("\n[反応式の原子数収支（端末内のみ）]");
+{
+  const { ChemFormula } = makeEnv({ fetchImpl: async () => json(404, {}) });
+  const el = (r) => plain(r.elements.map((e) => `${e.symbol}:${e.left}/${e.right}`));
+  await test("釣り合っている式を判定する（係数・矢印の種類・Unicode下付き）", () => {
+    for (const eq of ["2H2 + O2 -> 2H2O", "2H2 + O2 \u2192 2H2O", "2H2 + O2 = 2H2O", "2H\u2082 + O\u2082 <=> 2H\u2082O", "CH4 + 2O2 --> CO2 + 2H2O"]) {
+      assert.equal(ChemFormula.balanceReaction(eq)?.balanced, true, eq);
+    }
+  });
+  await test("釣り合っていない式は、元素ごとの左右の個数を返す", () => {
+    const r = ChemFormula.balanceReaction("H2 + O2 -> H2O");
+    assert.equal(r.balanced, false);
+    assert.deepEqual(el(r), ["H:2/2", "O:2/1"]);
+  });
+  await test("括弧・水和物も展開して数える（CuSO4·5H2O → CuSO4 + 5H2O）", () => {
+    assert.equal(ChemFormula.balanceReaction("CuSO4\u00b75H2O -> CuSO4 + 5H2O")?.balanced, true);
+    assert.equal(ChemFormula.balanceReaction("Ca(OH)2 + 2HCl -> CaCl2 + 2H2O")?.balanced, true);
+  });
+  await test("元素は C → H → アルファベット順に並べる", () => {
+    assert.deepEqual(el(ChemFormula.balanceReaction("CH4 + 2O2 -> CO2 + 2H2O")), ["C:1/1", "H:4/4", "O:4/4"]);
+  });
+  await test("反応式ではない入力は null（通常の検索として扱う）: 名前・単一の式・SMILES(C=C)・イオン・不正な式", () => {
+    for (const q of ["aspirin", "H2O", "C=C", "CC=O", "Na+ -> Na", "A -> B", "H2 + O2", "2H2 + O2 -> 2H2O -> x", "-> H2O", "H2O ->"]) {
+      assert.equal(ChemFormula.balanceReaction(q), null, q);
+    }
+  });
+}
+
+console.log("\n[一般名（Title）と異性体候補の名前]");
+await test("Title を要求して、props.Title に入る", async () => {
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(url);
+    if (url.includes("/name/")) return json(200, { IdentifierList: { CID: [962] } });
+    if (url.includes("/property/")) return json(200, PROPS({ CID: 962, Title: "Water", IUPACName: "oxidane" }));
+    return json(404, {});
+  };
+  const { ChemAPI } = makeEnv({ fetchImpl });
+  const r = await ChemAPI.resolveCompound("water", { light: true });
+  assert.equal(r.props.Title, "Water");
+  assert.equal(r.props.IUPACName, "oxidane");
+  assert.ok(urls.find((u) => u.includes("/property/")).includes("Title,"), "プロパティ要求にTitleが含まれていません");
+});
+
+await test("異性体候補の名前を1回の問い合わせでまとめて取得する（light以外）", async () => {
+  const urls = [];
+  const fetchImpl = async (url) => {
+    urls.push(url);
+    if (url.includes("/name/")) return json(404, {});
+    if (url.includes("/fastformula/")) return json(200, { IdentifierList: { CID: [100, 200, 300] } });
+    if (url.includes("/property/Title/")) {
+      return json(200, { PropertyTable: { Properties: [{ CID: 100, Title: "Glucose" }, { CID: 200, Title: "Fructose" }, { CID: 300, Title: "  " }, { CID: "x", Title: "bad" }] } });
+    }
+    if (url.includes("/property/")) return json(200, PROPS());
+    if (url.includes("/SDF")) return text(200, "sdf");
+    return json(404, {});
+  };
+  const { ChemAPI } = makeEnv({ fetchImpl });
+  const r = await ChemAPI.resolveCompound("C6H12O6");
+  assert.deepEqual(plain(r.candidateTitles), { "100": "Glucose", "200": "Fructose" }, "空の名前・不正なCIDは採用しない");
+  const titleUrls = urls.filter((u) => u.includes("/property/Title/"));
+  assert.equal(titleUrls.length, 1, "候補ごとに問い合わせず、1回にまとめること");
+  assert.ok(titleUrls[0].includes("/cid/100,200,300/"));
+});
+
+await test("候補の名前の取得に失敗しても、検索結果自体は成立する", async () => {
+  const fetchImpl = async (url) => {
+    if (url.includes("/name/")) return json(404, {});
+    if (url.includes("/fastformula/")) return json(200, { IdentifierList: { CID: [100, 200] } });
+    if (url.includes("/property/Title/")) return json(503, {});
+    if (url.includes("/property/")) return json(200, PROPS());
+    if (url.includes("/SDF")) return text(200, "sdf");
+    return json(404, {});
+  };
+  const { ChemAPI } = makeEnv({ fetchImpl });
+  const r = await ChemAPI.resolveCompound("C6H12O6");
+  assert.equal(r.cid, 100);
+  assert.deepEqual(plain(r.candidateTitles), {});
+});
+
+console.log("\n[検索結果のキャッシュ（履歴に紐づく・storage.session）]");
+{
+  const sample = (over = {}) => ({ cid: 2244, props: { MolecularFormula: "C9H8O4" }, matchedBy: "name", otherCids: [], sdf: "sdf", synonyms: [], casNumber: null, ghs: null, imageUrl: "x", ...over });
+  const none = async () => json(404, {});
+
+  await test("履歴に残っている検索の結果を保存し、読み出せる（画像URLは保存値でなくCIDから作り直す）", async () => {
+    const { ChemAPI } = makeEnv({ fetchImpl: none });
+    await ChemAPI.addHistoryEntry({ query: "aspirin", smilesMode: false });
+    await ChemAPI.setCachedResult("aspirin", false, sample({ imageUrl: "javascript:alert(1)" }));
+    const hit = await ChemAPI.getCachedResult("aspirin", false);
+    assert.equal(hit.cid, 2244);
+    assert.equal(hit.sdf, "sdf");
+    assert.equal(hit.imageUrl, ChemAPI.get2DImageUrl(2244), "保存されていた画像URLを使っています");
+    assert.equal(await ChemAPI.getCachedResult("aspirin", true), null, "検索モード（SMILES）が違えば別の検索");
+    assert.equal((await ChemAPI.getCacheInfo()).count, 1);
+  });
+  await test("履歴に無い検索は保存しない", async () => {
+    const { ChemAPI, session } = makeEnv({ fetchImpl: none });
+    await ChemAPI.setCachedResult("glucose", false, sample());
+    assert.equal(session.resultCache, undefined);
+    assert.equal(await ChemAPI.getCachedResult("glucose", false), null);
+  });
+  await test("プライベートウィンドウでは保存しない（履歴と同じ扱い）", async () => {
+    const { ChemAPI, session } = makeEnv({ fetchImpl: none, incognito: true });
+    await ChemAPI.addHistoryEntry({ query: "aspirin", smilesMode: false });
+    await ChemAPI.setCachedResult("aspirin", false, sample());
+    assert.equal(session.resultCache, undefined);
+  });
+  await test("設定でOFFなら、保存も読み出しもしない", async () => {
+    const { ChemAPI, session } = makeEnv({ fetchImpl: none, settings: { cacheEnabled: false } });
+    await ChemAPI.addHistoryEntry({ query: "aspirin", smilesMode: false });
+    await ChemAPI.setCachedResult("aspirin", false, sample());
+    assert.equal(session.resultCache, undefined);
+    session.resultCache = { "name:aspirin": { ts: Date.now(), data: sample() } };
+    assert.equal(await ChemAPI.getCachedResult("aspirin", false), null, "OFFなのに保存済みの結果を返しました");
+  });
+  await test("6時間を過ぎた結果は使わない", async () => {
+    const { ChemAPI, session } = makeEnv({ fetchImpl: none });
+    session.resultCache = { "name:aspirin": { ts: Date.now() - 6 * 3600 * 1000 - 1000, data: sample() } };
+    assert.equal(await ChemAPI.getCachedResult("aspirin", false), null);
+    session.resultCache = { "name:aspirin": { ts: Date.now() - 3600 * 1000, data: sample() } };
+    assert.equal((await ChemAPI.getCachedResult("aspirin", false)).cid, 2244);
+  });
+  await test("壊れた保存データは使わない", async () => {
+    const { ChemAPI, session } = makeEnv({ fetchImpl: none });
+    for (const bad of [null, "x", [], { "name:aspirin": null }, { "name:aspirin": { ts: "a", data: sample() } }, { "name:aspirin": { ts: Date.now(), data: { cid: -1, props: {} } } }, { "name:aspirin": { ts: Date.now(), data: { cid: 1 } } }]) {
+      session.resultCache = bad;
+      assert.equal(await ChemAPI.getCachedResult("aspirin", false), null, JSON.stringify(bad));
+    }
+  });
+  await test("履歴から外れた検索のキャッシュは一緒に消える（件数上限での押し出し）", async () => {
+    const { ChemAPI } = makeEnv({ fetchImpl: none, settings: { historyMax: 2 } });
+    for (const q of ["a1", "b2"]) {
+      await ChemAPI.addHistoryEntry({ query: q, smilesMode: false });
+      await ChemAPI.setCachedResult(q, false, sample());
+    }
+    assert.equal((await ChemAPI.getCacheInfo()).count, 2);
+    await ChemAPI.addHistoryEntry({ query: "c3", smilesMode: false }); // a1 が履歴から押し出される
+    assert.equal(await ChemAPI.getCachedResult("a1", false), null);
+    assert.equal((await ChemAPI.getCacheInfo()).count, 1);
+    assert.notEqual(await ChemAPI.getCachedResult("b2", false), null);
+  });
+  await test("履歴を消去するとキャッシュも消え、clearCache でも消せる", async () => {
+    const { ChemAPI, session } = makeEnv({ fetchImpl: none });
+    await ChemAPI.addHistoryEntry({ query: "aspirin", smilesMode: false });
+    await ChemAPI.setCachedResult("aspirin", false, sample());
+    await ChemAPI.clearHistory();
+    assert.equal(session.resultCache, undefined);
+    await ChemAPI.addHistoryEntry({ query: "aspirin", smilesMode: false });
+    await ChemAPI.setCachedResult("aspirin", false, sample());
+    assert.equal((await ChemAPI.getCacheInfo()).count, 1);
+    await ChemAPI.clearCache();
+    assert.equal((await ChemAPI.getCacheInfo()).count, 0);
+  });
+  await test("大きすぎる結果は保存しない", async () => {
+    const { ChemAPI, session } = makeEnv({ fetchImpl: none });
+    await ChemAPI.addHistoryEntry({ query: "protein", smilesMode: false });
+    await ChemAPI.setCachedResult("protein", false, sample({ sdf: "x".repeat(450000) }));
+    assert.equal(session.resultCache, undefined);
+  });
+  await test("永続ストレージ（storage.local）にはキャッシュを書かない", async () => {
+    const { ChemAPI, store } = makeEnv({ fetchImpl: none });
+    await ChemAPI.addHistoryEntry({ query: "aspirin", smilesMode: false });
+    await ChemAPI.setCachedResult("aspirin", false, sample());
+    assert.equal(JSON.stringify(store).includes("sdf"), false, "storage.local に構造データが書かれています");
+  });
+}
 
 console.log(`\n結果: ${passed} 件成功 / ${failed} 件失敗`);
 process.exit(failed ? 1 : 0);
