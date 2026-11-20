@@ -168,8 +168,10 @@ node build.mjs      # dist/firefox, dist/chrome とzipを生成（検査つき�
 - シークレットスキャン（プッシュ保護つき）と、脆弱性の非公開報告（[SECURITY.md](SECURITY.md)）を有効にしています
 
 ### リリース手順
-1. `manifest.firefox.json` と `manifest.chrome.json` の `version` を同じ値に上げる
-2. `git tag v0.3.1 && git push origin v0.3.1`
+1. `manifest.firefox.json` と `manifest.chrome.json` の `version` を同じ値に上げる（`package.json` も合わせる）
+2. 変更を `main` に取り込んでから、タグを push する。**PRをマージしただけではReleaseは作られません**
+   - 安定版: `git tag v0.4.0 && git push origin v0.4.0`
+   - 試験版: `git tag v0.4.0-beta.1 && git push origin v0.4.0-beta.1`（ハイフンを含むタグはプレリリースになり、「最新版」は更新されません。manifestの`version`は、ハイフン以降を除いた`0.4.0`のままにします）
 3. Releaseに添付されたzipを、各ストアへ提出する（提出作業は「ストア提出に向けて」を参照）
 
 ## ライセンス
