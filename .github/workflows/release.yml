@@ -27,11 +27,14 @@ jobs:
           cache-dependency-path: tests/package-lock.json
       - name: Verify that the tag matches the manifest versions
         run: |
+          # 試験版タグ（v0.4.0-beta.1）は、ハイフン以降を除いた「0.4.0」を manifest と照合する
+          # （manifest の version は数字だけでなければならない: Chrome の仕様）
           TAG_VERSION="${GITHUB_REF_NAME#v}"
+          BASE_VERSION="${TAG_VERSION%%-*}"
           for m in manifest.firefox.json manifest.chrome.json; do
             V=$(node -p "require('./$m').version")
-            if [ "$V" != "$TAG_VERSION" ]; then
-              echo "::error::$m version ($V) does not match the tag ($TAG_VERSION)"
+            if [ "$V" != "$BASE_VERSION" ]; then
+              echo "::error::$m version ($V) does not match the tag ($GITHUB_REF_NAME; expected $BASE_VERSION)"
               exit 1
             fi
           done
