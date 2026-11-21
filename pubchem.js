@@ -23,7 +23,7 @@ const DEFAULT_SETTINGS = {
   historyMax: 20,
   preferredStructure: "3d", // "3d" または "2d"
   autoHighlight: false, // ページ内自動ハイライト（デフォルトOFF）
-  resultLanguage: "en", // "en" または "ja"（化合物名・GHS文言の表示言語）
+  resultLanguage: "auto", // "auto"（ブラウザの言語に従う）/ "ja" / "en"（UI・化合物名・GHS文言の表示言語）
   cacheEnabled: true, // 検索結果のキャッシュ（履歴に残っている検索のみ。ブラウザを閉じると消える）
   viewerStyle: "ballstick", // 3D表示スタイル
 };
@@ -40,10 +40,18 @@ function sanitizeSettings(raw) {
     historyMax: num(s.historyMax, 1, 200, DEFAULT_SETTINGS.historyMax),
     preferredStructure: s.preferredStructure === "2d" ? "2d" : "3d",
     autoHighlight: s.autoHighlight === true,
-    resultLanguage: s.resultLanguage === "ja" ? "ja" : "en",
+    resultLanguage: s.resultLanguage === "ja" || s.resultLanguage === "en" ? s.resultLanguage : "auto",
     cacheEnabled: s.cacheEnabled !== false,
     viewerStyle: VIEWER_STYLES.includes(s.viewerStyle) ? s.viewerStyle : DEFAULT_SETTINGS.viewerStyle,
   };
+}
+
+// "auto" はブラウザのUI言語（日本語なら ja、それ以外は en）に解決する
+function resolveLanguage(setting) {
+  if (setting === "ja" || setting === "en") return setting;
+  let ui = "en";
+  try { ui = browser.i18n.getUILanguage() || "en"; } catch {}
+  return ui.toLowerCase().startsWith("ja") ? "ja" : "en";
 }
 
 async function getSettings() {
@@ -580,6 +588,7 @@ globalThis.ChemAPI = {
   clearHistory,
   exportHistoryAsJSON,
   getSettings,
+  resolveLanguage,
   saveSettings,
   isPrivateContext,
   getCachedResult,
