@@ -55,7 +55,7 @@ let isSearching = false; // 多重リクエスト防止用フラグ
 let lastResult = null; // 「結果をコピー」用に直近の検索結果を保持
 let viewMode = "3d"; // "3d"（3Dmol.jsモデル） または "image"（PubChemの2D画像）
 let currentImageUrl = null; // 2D画像は表示モードになるまで読み込まない（不要な通信を避ける）
-let currentLang = "en"; // 表示言語（英語既定）。設定の resultLanguage から初期化する
+let currentLang = "en"; // 表示言語。設定の resultLanguage（既定はブラウザの言語）から初期化する
 let currentJaName = null; // 直近の結果についての日本語名（取得済みならキャッシュ、未取得ならnull）
 let currentGhs = null; // 翻訳トグルでHコードの表示を切り替えるために保持
 let currentSdf = null; // 「SDF保存」用に、表示中の構造データを保持
@@ -71,7 +71,7 @@ if (els.privateNote && ChemAPI.isPrivateContext()) {
 
 // 設定の表示言語を初期値として反映（以後はこのポップアップ内でのトグルで切り替える）
 ChemAPI.getSettings().then((settings) => {
-  currentLang = settings.resultLanguage;
+  currentLang = ChemAPI.resolveLanguage(settings.resultLanguage);
   currentStyle = settings.viewerStyle;
   els.styleSelect.value = currentStyle;
   updateLangToggleLabel();
@@ -349,6 +349,10 @@ if (els.langToggle) {
     currentLang = currentLang === "ja" ? "en" : "ja";
     updateLangToggleLabel();
     await ChemAPI.saveSettings({ resultLanguage: currentLang });
+    await setLocale(currentLang); // UI文言も切り替える
+    setBusy(isSearching); // 検索ボタンの文言を更新
+    if (lastResult && els.viewToggle.style.display !== "none") setViewMode(viewMode);
+    renderHistory();
     await updateNameDisplay();
   });
 }

@@ -10,8 +10,28 @@
     if (stored.settings?.autoHighlight !== true) return;
 
     // i18n.js は DOM 全体の data-i18n を書き換えるため、任意のWebページには読み込まない。
+    // 表示言語は設定（既定はブラウザの言語）に従う。ページ内で使う文言は少ないので、ここに持つ。
+    const CONTENT_STRINGS = {
+      ja: {
+        highlightClickHint: "クリックして詳細を表示",
+        highlightOpening: "ポップアップを開いています…",
+        highlightCheckToolbar: "ツールバーのアイコンをクリックしてください",
+        highlightError: "取得に失敗しました。時間をおいてもう一度クリックしてください",
+      },
+      en: {
+        highlightClickHint: "Click to show details",
+        highlightOpening: "Opening the popup…",
+        highlightCheckToolbar: "Click the toolbar icon to see the result",
+        highlightError: "Lookup failed. Please click again in a moment",
+      },
+    };
+    const setting = stored.settings?.resultLanguage;
+    const contentLang =
+      setting === "ja" || setting === "en"
+        ? setting
+        : String((browser.i18n.getUILanguage && browser.i18n.getUILanguage()) || "en").toLowerCase().startsWith("ja") ? "ja" : "en";
     function t(key) {
-      return browser.i18n.getMessage(key) || key;
+      return CONTENT_STRINGS[contentLang][key] || key;
     }
 
     const MAX_WRAPS = 3000; // 1ページあたりのハイライト上限（到達したらコンソールに明示する）

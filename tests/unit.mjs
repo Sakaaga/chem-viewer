@@ -475,7 +475,7 @@ await test("壊れた/改ざんされた保存データは除外・補正され�
   store.searchHistory = [1, null, { query: 5 }, { query: "ok", timestamp: 1 }];
   assert.deepEqual(plain((await ChemAPI.getHistory()).map((h) => h.query)), ["ok"]);
   store.settings = { timeoutSeconds: "abc", historyMax: 99999, preferredStructure: "x", autoHighlight: "yes", resultLanguage: "fr" };
-  assert.deepEqual(plain(await ChemAPI.getSettings()), { timeoutSeconds: 8, historyMax: 200, preferredStructure: "3d", autoHighlight: false, resultLanguage: "en", cacheEnabled: true, viewerStyle: "ballstick" });
+  assert.deepEqual(plain(await ChemAPI.getSettings()), { timeoutSeconds: 8, historyMax: 200, preferredStructure: "3d", autoHighlight: false, resultLanguage: "auto", cacheEnabled: true, viewerStyle: "ballstick" });
   store.settings = { cacheEnabled: false, viewerStyle: "sphere" };
   const s2 = await ChemAPI.getSettings();
   assert.equal(s2.cacheEnabled, false);

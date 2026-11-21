@@ -159,7 +159,7 @@ await test("ポップアップを自動で開けない場合（古いブラウ�
   w[TRUSTED] = true;
   doc.querySelector(".chemviewer-hl").dispatchEvent(new w.MouseEvent("click", { bubbles: true }));
   await sleep(300);
-  assert.ok(doc.getElementById("chemviewer-tooltip").textContent.includes("highlightCheckToolbar"));
+  assert.ok(doc.getElementById("chemviewer-tooltip").textContent.includes("Click the toolbar icon"));
 });
 
 await test("ページに pubchem.js が無くても動く（通信はバックグラウンドのみ）／ページからPubChemへ直接fetchしない", async () => {
