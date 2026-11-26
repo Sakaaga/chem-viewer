@@ -334,8 +334,11 @@ async function updateNameDisplay() {
   if (!lastResult) return;
   if (currentLang === "ja") {
     if (currentJaName === null && lastResult.matchedBy !== "ja-name") {
-      els.rName.textContent = t("statusSearching");
-      currentJaName = (await ChemAPI.fetchJapaneseLabelByCid(lastResult.cid).catch(() => null)) || "";
+      const cid = lastResult.cid;
+      // 取得中は英語名を表示したままにし、日本語名が見つかったら置き換える（表示がちらつかないように）
+      const label = (await ChemAPI.fetchJapaneseLabelByCid(cid).catch(() => null)) || "";
+      if (!lastResult || lastResult.cid !== cid) return; // 取得中に別の検索結果へ切り替わった場合は反映しない
+      currentJaName = label;
     }
     els.rName.textContent = currentJaName || lastResult.nameEn;
   } else {
@@ -431,6 +434,9 @@ async function renderResult(resolved, query, smilesMode, { skipHistory = false, 
     casNumber: casNumber || "-",
     pubchemUrl: `https://pubchem.ncbi.nlm.nih.gov/compound/${cid}`,
   };
+
+  // 日本語表示中は、名前・分子式で見つかった化合物の日本語名も（検索のたびに）取得して表示する
+  if (currentLang === "ja" && currentJaName === null && matchedBy !== "ja-name") updateNameDisplay();
 
   if (!skipHistory) {
     await ChemAPI.addHistoryEntry({
